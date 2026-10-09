@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "contact_email": "you@example.edu",
+  "api_keys": {
+    "elsevier": "",
+    "elsevier_inst_token": "",
+    "openalex": "",
+    "crossref": "",
+    "wos": ""
+  },
+  "network": {
+    "timeout_seconds": 25,
+    "download_timeout_seconds": 90,
+    "max_retries": 2,
+    "retry_delay_seconds": 2
+  },
+  "elsevier": {
+    "use_aam": false,
+    "use_xml_reconstruction": false,
+    "figure_download_workers": 4
+  },
+  "download": {
+    "source_order": [
+      "openalex",
+      "elsevier",
+      "webvpn"
+    ],
+    "max_batch_papers": 60,
+    "max_file_mb": 120,
+    "per_paper_timeout_seconds": 300
+  },
+  "webvpn": {
+    "enabled": false,
+    "base_url": "",
+    "key": "",
+    "iv": "",
+    "request_delay_seconds": 2
+  },
+  "institution": {
+    "school_id": "campus-network-direct",
+    "school_name": "校园网直连",
+    "access_type": "direct",
+    "schools_file": "schools.json",
+    "request_delay_seconds": 2,
+    "connector_url": ""
+  },
+  "paths": {
+    "pdf_dir": "downloads"
+  },
+  "literature_search": {
+    "limit": 20
+  }
+}

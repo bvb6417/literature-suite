@@ -1,0 +1,27 @@
+# Local configuration and credentials
+config.local.json
+*.local.json
+
+# Runtime data written beside the entry file
+downloads/
+state/
+browser-data/
+.tmp/
+.literature_suite/
+metadata_library.sqlite3*
+*.ris
+*.csv
+
+# Python / build output
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.spec
+*.exe
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

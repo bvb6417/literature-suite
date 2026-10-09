@@ -1,0 +1,1472 @@
+{
+  "version": 2,
+  "catalog": {
+    "kind": "bundled",
+    "count": 144,
+    "note": "公开学校接入参数已固化到本文件；运行时不依赖外部学校目录包。",
+    "provenance": "Derived from the ScanSciPDF 1.9.0 school catalog",
+    "license": "Apache-2.0",
+    "runtime_dependency": false
+  },
+  "schools": [
+    {
+      "id": "catalog-4a886f65f95e",
+      "name": "哈尔滨工程大学",
+      "province": "哈尔滨",
+      "type": "webvpn",
+      "base_url": "https://ehome-443.wvpn.hrbeu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-2d09a0fa8c79",
+      "name": "上海工程技术大学",
+      "province": "上海",
+      "type": "webvpn",
+      "base_url": "https://webvpn.sues.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-1796228dd643",
+      "name": "上海海事大学",
+      "province": "上海",
+      "type": "webvpn",
+      "base_url": "https://webvpn.shmtu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-70e034991ee7",
+      "name": "上海第二工业大学",
+      "province": "上海",
+      "type": "easyconnect",
+      "base_url": "https://vpn.sspu.edu.cn",
+      "origin": "catalog"
+    },
+    {
+      "id": "catalog-5e49068cdc5b",
+      "name": "东华大学",
+      "province": "上海",
+      "type": "webvpn",
+      "base_url": "https://webvpn.dhu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "DjPa!@#202211DhU",
+      "crypto_iv": "DjPa!@#202211DhU"
+    },
+    {
+      "id": "catalog-8eea5767e2a8",
+      "name": "复旦大学",
+      "province": "上海",
+      "type": "webvpn",
+      "base_url": "https://webvpn.fudan.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-affe4e2befd4",
+      "name": "云南中医药大学",
+      "province": "云南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.ynutcm.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-6b66d9dccc0b",
+      "name": "云南大学",
+      "province": "云南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.ynu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-86cb78dd1202",
+      "name": "保山学院",
+      "province": "云南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.bsnc.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-62e4a39c2320",
+      "name": "玉溪师范学院",
+      "province": "云南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.yxnu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-2edd5232add2",
+      "name": "中国人民公安大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://webvpn.ppsuc.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-2509b376f06f",
+      "name": "中国人民大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://webvpn.ruc.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-91c1b45b1703",
+      "name": "中国传媒大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://webvpn.cuc.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-ef5fa43d1c8b",
+      "name": "中国青年政治学院",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://webvpn.cyu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-2789106f6730",
+      "name": "北京农学院",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://webvpn.bua.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-b92c2568cba7",
+      "name": "北京化工大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://w.buct.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-8e52bcd12bec",
+      "name": "北京外国语大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://webvpn.bfsu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-bdb934e7ef21",
+      "name": "北京大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://wpn.pku.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-7899dd38626c",
+      "name": "北京工业大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://webvpn.bjut.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-10909e1a8f30",
+      "name": "北京师范大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://onevpn.bnu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-8cd0055295a3",
+      "name": "北京建筑大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://webvpn.bucea.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-57b112106e72",
+      "name": "北京理工大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://webvpn.bit.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-51c1cf17936a",
+      "name": "北京石油化工学院",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://webvpn.bipt.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-b24161239053",
+      "name": "北京科技大学（图书馆/校园网内可用）",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://elib.ustb.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-aaec82a6650b",
+      "name": "北京科技大学（校园网内不可用）",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://n.ustb.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-3d3c0a1b20d0",
+      "name": "北京航空航天大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://d.buaa.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-c28365883054",
+      "name": "北京邮电大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://webvpn.bupt.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-1d06839e534a",
+      "name": "华北电力大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://myvpn.ncepu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-9f484f352034",
+      "name": "清华大学",
+      "province": "北京",
+      "type": "webvpn",
+      "base_url": "https://webvpn.tsinghua.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-675496b20176",
+      "name": "吉林大学",
+      "province": "吉林",
+      "type": "webvpn",
+      "base_url": "https://webvpn.jlu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-cb22d5f2f2ef",
+      "name": "长春人文学院",
+      "province": "吉林",
+      "type": "webvpn",
+      "base_url": "https://webvpn.ccrw.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "pIS7w5FW3OabpG6k",
+      "crypto_iv": "pIS7w5FW3OabpG6k"
+    },
+    {
+      "id": "catalog-6aee5e9579e0",
+      "name": "四川传媒学院",
+      "province": "四川",
+      "type": "webvpn",
+      "base_url": "https://webvpn.scmc.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-1298dbe7a4a9",
+      "name": "四川师范大学",
+      "province": "四川",
+      "type": "webvpn",
+      "base_url": "https://webvpn.sicnu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-4c87de2f6062",
+      "name": "电子科技大学",
+      "province": "四川",
+      "type": "webvpn",
+      "base_url": "https://webvpn.uestc.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-afcdd2effca4",
+      "name": "西华师范大学",
+      "province": "四川",
+      "type": "webvpn",
+      "base_url": "https://webvpn.cwnu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-f6e854a388ba",
+      "name": "南开大学",
+      "province": "天津",
+      "type": "webvpn",
+      "base_url": "https://webvpn.nankai.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-114663026479",
+      "name": "天津城建大学",
+      "province": "天津",
+      "type": "webvpn",
+      "base_url": "https://webvpn1.tcu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-8e0c5fa69279",
+      "name": "天津城建大学（教师）",
+      "province": "天津",
+      "type": "webvpn",
+      "base_url": "https://webvpn.tcu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-47603548b058",
+      "name": "宁夏大学",
+      "province": "宁夏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.nxu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-4eaa07abeaf1",
+      "name": "中国科学技术大学",
+      "province": "安徽",
+      "type": "webvpn",
+      "base_url": "https://wvpn.ustc.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-4b76695f239d",
+      "name": "合肥工业大学",
+      "province": "安徽",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hfut.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-472f51ad6639",
+      "name": "安徽医科大学",
+      "province": "安徽",
+      "type": "webvpn",
+      "base_url": "https://webvpn.ahmu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-01a792cc7ab0",
+      "name": "安徽大学",
+      "province": "安徽",
+      "type": "webvpn",
+      "base_url": "https://wvpn.ahu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-c8e7385b4e15",
+      "name": "安徽工业大学",
+      "province": "安徽",
+      "type": "webvpn",
+      "base_url": "https://vpncas.ahut.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-179114bda153",
+      "name": "皖南医学院",
+      "province": "安徽",
+      "type": "webvpn",
+      "base_url": "https://webvpn.wnmc.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-410c2eb85e28",
+      "name": "皖西学院",
+      "province": "安徽",
+      "type": "webvpn",
+      "base_url": "https://webvpn.wxc.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-544aa79be420",
+      "name": "铜陵学院",
+      "province": "安徽",
+      "type": "webvpn",
+      "base_url": "https://webvpn.tlu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-c7f7d467a779",
+      "name": "阜阳师范大学",
+      "province": "安徽",
+      "type": "webvpn",
+      "base_url": "https://webvpn.fynu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-8df29c6935e7",
+      "name": "中国海洋大学",
+      "province": "山东",
+      "type": "atrust",
+      "base_url": "https://vpn.ouc.edu.cn",
+      "origin": "catalog",
+      "gateway": "otrust.ouc.edu.cn"
+    },
+    {
+      "id": "catalog-a90e30d12a49",
+      "name": "山东外国语职业技术大学",
+      "province": "山东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.swut.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-52720d6450aa",
+      "name": "山东大学",
+      "province": "山东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.sdu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-6590a10d15b1",
+      "name": "山东石油化工学院",
+      "province": "山东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.sdipct.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-070d5c491148",
+      "name": "山东科技大学",
+      "province": "山东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.sdust.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-8539632cd822",
+      "name": "山东财经大学",
+      "province": "山东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.sdufe.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-7d19e57fa9a0",
+      "name": "山东青年政治学院",
+      "province": "山东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.sdyu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-a3373ce91120",
+      "name": "枣庄学院",
+      "province": "山东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.uzz.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-519508f36a26",
+      "name": "济南大学",
+      "province": "山东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.ujn.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-94e44731389e",
+      "name": "济宁学院",
+      "province": "山东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.jnxy.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-afd8a0517df3",
+      "name": "潍坊医学院",
+      "province": "山东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.wfmc.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-523d1cab41d1",
+      "name": "烟台大学",
+      "province": "山东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.ytu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-6eac6c823d5f",
+      "name": "青岛大学",
+      "province": "山东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.qdu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-5f56b19310d6",
+      "name": "青岛科技大学",
+      "province": "山东",
+      "type": "webvpn",
+      "base_url": "https://wvpn.qust.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-3b14b72d25a1",
+      "name": "哈尔滨工业大学（深圳）",
+      "province": "广东",
+      "type": "atrust",
+      "base_url": "https://vpn.hitsz.edu.cn",
+      "origin": "catalog"
+    },
+    {
+      "id": "catalog-a2fcdf8d8a2d",
+      "name": "岭南师范学院",
+      "province": "广东",
+      "type": "webvpn",
+      "base_url": "https://csvpn.lingnan.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-b56ba61ae2dd",
+      "name": "广东海洋大学",
+      "province": "广东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.gdou.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-629b41fa66a4",
+      "name": "广州医科大学",
+      "province": "广东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.gzhmu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-1d0bf2b94f33",
+      "name": "广州大学",
+      "province": "广东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.gzhu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-2586f33d9299",
+      "name": "肇庆学院",
+      "province": "广东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.zqu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "a#08w3%r8*4GkTcH",
+      "crypto_iv": "4&0TB20Ujm%mvT.K"
+    },
+    {
+      "id": "catalog-454abe2a3078",
+      "name": "韩山师范学院",
+      "province": "广东",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hstc.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-334de187539e",
+      "name": "桂林航天工业学院",
+      "province": "广西",
+      "type": "webvpn",
+      "base_url": "https://webvpn.guat.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-cbdf67492d3a",
+      "name": "河池学院",
+      "province": "广西",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hcnu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-15167f2d3efa",
+      "name": "中国药科大学",
+      "province": "江苏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.cpu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-6459e521ce65",
+      "name": "南京农业大学",
+      "province": "江苏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.njau.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-1687814f1abd",
+      "name": "南京大学",
+      "province": "江苏",
+      "type": "easyconnect",
+      "base_url": "https://vpn.nju.edu.cn",
+      "origin": "catalog"
+    },
+    {
+      "id": "catalog-71456db6e767",
+      "name": "南京工程学院",
+      "province": "江苏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.njit.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-b1eab56200be",
+      "name": "南京理工大学",
+      "province": "江苏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.njust.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-b005211e0e6f",
+      "name": "天平学院",
+      "province": "江苏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.tpxy.usts.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-84acf11f43fe",
+      "name": "扬州大学",
+      "province": "江苏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.yzu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-2fdfa8ce1528",
+      "name": "无锡学院",
+      "province": "江苏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.cwxu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-78e72d2094a2",
+      "name": "江苏大学",
+      "province": "江苏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.ujs.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-ffc40cda8273",
+      "name": "江苏海洋大学",
+      "province": "江苏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.jou.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "hhu",
+      "name": "河海大学",
+      "province": "江苏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hhu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!",
+      "cookie_file_name": "webvpn_cookies.json",
+      "notes": "内置兼容配置；账号、密码和 Cookie 不保存在本文件中。"
+    },
+    {
+      "id": "catalog-70724b3915cd",
+      "name": "苏州城市学院",
+      "province": "江苏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.szcu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-95107f203910",
+      "name": "苏州工学院",
+      "province": "江苏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.szut.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-4da0ad310f82",
+      "name": "苏州科技大学",
+      "province": "江苏",
+      "type": "webvpn",
+      "base_url": "https://webvpn.usts.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-53e33bb736a6",
+      "name": "东北大学秦皇岛分校",
+      "province": "河北",
+      "type": "webvpn",
+      "base_url": "https://vpn.neuq.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-eddf36381532",
+      "name": "中国人民警察大学",
+      "province": "河北",
+      "type": "webvpn",
+      "base_url": "https://webvpn.cppu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-d5470d55780c",
+      "name": "河北农业大学",
+      "province": "河北",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hebau.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-8f88f90cf502",
+      "name": "河北医科大学",
+      "province": "河北",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hebmu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-12e4d261b9e7",
+      "name": "河北地质大学",
+      "province": "河北",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hgu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-a015cea4ed32",
+      "name": "河北大学",
+      "province": "河北",
+      "type": "webvpn",
+      "base_url": "https://v.hbu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-9f18fb33fcf5",
+      "name": "河北对外经贸职业学院",
+      "province": "河北",
+      "type": "webvpn",
+      "base_url": "https://vpn.hbiibe.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-b75bc3dec62a",
+      "name": "河北环境工程学院",
+      "province": "河北",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hebuee.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-57aabc9c6411",
+      "name": "石家庄学院",
+      "province": "河北",
+      "type": "webvpn",
+      "base_url": "https://wvpn.sjzc.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-89b22dde6eb4",
+      "name": "洛阳师范学院",
+      "province": "河南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.lynu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-756e2ee19450",
+      "name": "郑州航空工业管理学院",
+      "province": "河南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.zua.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-8e6820e67e13",
+      "name": "郑州轻工业大学",
+      "province": "河南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.zzuli.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-0eeb6e9b0275",
+      "name": "中国美术学院",
+      "province": "浙江",
+      "type": "webvpn",
+      "base_url": "https://webvpn.caa.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-129f9a2ecc47",
+      "name": "嘉兴南湖学院",
+      "province": "浙江",
+      "type": "webvpn",
+      "base_url": "https://webvpn.jxnhu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-20308664c822",
+      "name": "嘉兴学院",
+      "province": "浙江",
+      "type": "webvpn",
+      "base_url": "https://webvpn.zjxu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-8d875bd49fa6",
+      "name": "浙江大学",
+      "province": "浙江",
+      "type": "easyconnect",
+      "base_url": "https://vpn.zju.edu.cn",
+      "origin": "catalog"
+    },
+    {
+      "id": "catalog-f783ecac7c5d",
+      "name": "浙江学院",
+      "province": "浙江",
+      "type": "webvpn",
+      "base_url": "https://webvpn.shufe-zj.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-fab6782c2eb0",
+      "name": "浙江师范大学",
+      "province": "浙江",
+      "type": "webvpn",
+      "base_url": "https://webvpn.zjnu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-c15f227c2db1",
+      "name": "浙江警察学院",
+      "province": "浙江",
+      "type": "webvpn",
+      "base_url": "https://webvpn.zjjcxy.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-e5ddf9f5b70c",
+      "name": "温州医科大学",
+      "province": "浙江",
+      "type": "webvpn",
+      "base_url": "https://webvpn.wmu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-fd2e168195af",
+      "name": "海南大学",
+      "province": "海南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hainanu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-6c90a53a9b97",
+      "name": "华中师范大学",
+      "province": "湖北",
+      "type": "webvpn",
+      "base_url": "https://webvpn.ccnu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-8a196231f7d1",
+      "name": "武汉理工大学",
+      "province": "湖北",
+      "type": "webvpn",
+      "base_url": "https://webvpn.whut.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-1f3ecaae967b",
+      "name": "汉江师范学院",
+      "province": "湖北",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hjnu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "snmp-agentcommun",
+      "crypto_iv": "snmp-agentcommun"
+    },
+    {
+      "id": "catalog-bda26dff6d8d",
+      "name": "湖北大学",
+      "province": "湖北",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hubu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-ed47ad758f74",
+      "name": "湖北警官学院",
+      "province": "湖北",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hbpa.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-cca45820d70c",
+      "name": "黄冈师范学院",
+      "province": "湖北",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hgnu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-d5d48e92ffcf",
+      "name": "中南大学",
+      "province": "湖南",
+      "type": "atrust",
+      "base_url": "https://vpn.csu.edu.cn",
+      "origin": "catalog",
+      "gateway": "vpn.csu.edu.cn"
+    },
+    {
+      "id": "catalog-7217f4d98822",
+      "name": "吉首大学",
+      "province": "湖南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.jsu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-4cd43b55933e",
+      "name": "树达学院",
+      "province": "湖南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.sdw.hunnu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-eb681ea0103e",
+      "name": "湖南农业大学",
+      "province": "湖南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hunau.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wwwvpnisthebest!",
+      "crypto_iv": "wwwvpnisthebest!"
+    },
+    {
+      "id": "catalog-c070aadde24f",
+      "name": "湖南机电职业技术学院",
+      "province": "湖南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hnjdzy.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-2c24d4b88930",
+      "name": "湖南科技大学",
+      "province": "湖南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hnust.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-0b41ed5c0528",
+      "name": "邵阳学院",
+      "province": "湖南",
+      "type": "webvpn",
+      "base_url": "https://webvpn.hnsyu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-70c2caa37f04",
+      "name": "长沙理工大学",
+      "province": "湖南",
+      "type": "webvpn",
+      "base_url": "https://vpn.csust.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "WRDvpnisthebest!",
+      "crypto_iv": "WRDvpnisthebest!"
+    },
+    {
+      "id": "catalog-e63b9b8ceb96",
+      "name": "兰州大学",
+      "province": "甘肃",
+      "type": "webvpn",
+      "base_url": "https://vpnx.lzu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-6658e5ce6a67",
+      "name": "兰州工业学院",
+      "province": "甘肃",
+      "type": "webvpn",
+      "base_url": "https://webvpn.lzit.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-ce61b949d0f2",
+      "name": "甘肃农业大学",
+      "province": "甘肃",
+      "type": "webvpn",
+      "base_url": "https://webvpn.gsau.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-17bced7b1cf0",
+      "name": "甘肃政法大学",
+      "province": "甘肃",
+      "type": "webvpn",
+      "base_url": "https://webvpn.gsupl.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-4b5a2a0c195d",
+      "name": "西北师范大学",
+      "province": "甘肃",
+      "type": "webvpn",
+      "base_url": "https://webvpn.nwnu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-0d1bb067eb52",
+      "name": "厦门大学",
+      "province": "福建",
+      "type": "webvpn",
+      "base_url": "https://webvpn.xmu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-54792326aa9d",
+      "name": "福州大学",
+      "province": "福建",
+      "type": "webvpn",
+      "base_url": "https://webvpn.fzu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-4b18079b836c",
+      "name": "东北大学",
+      "province": "辽宁",
+      "type": "webvpn",
+      "base_url": "https://webvpn.neu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "b0A58a69394ce73@",
+      "crypto_iv": "b0A58a69394ce73@"
+    },
+    {
+      "id": "catalog-fa0471ff2531",
+      "name": "大连工业大学",
+      "province": "辽宁",
+      "type": "webvpn",
+      "base_url": "https://webvpn.dlpu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-743a3f748753",
+      "name": "大连理工大学",
+      "province": "辽宁",
+      "type": "webvpn",
+      "base_url": "https://webvpn.dlut.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "Wxzxvpn2023key@$",
+      "crypto_iv": "Wxzxvpn2023key@$"
+    },
+    {
+      "id": "catalog-2fcc4f6ba345",
+      "name": "沈阳农业大学",
+      "province": "辽宁",
+      "type": "webvpn",
+      "base_url": "https://webvpn.syau.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-920730acdc7c",
+      "name": "沈阳工程学院",
+      "province": "辽宁",
+      "type": "webvpn",
+      "base_url": "https://webvpn.sie.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-4fc67d5f3f2e",
+      "name": "沈阳建筑大学",
+      "province": "辽宁",
+      "type": "webvpn",
+      "base_url": "https://webvpn.sjzu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-82d6d06fecf1",
+      "name": "渤海大学",
+      "province": "辽宁",
+      "type": "webvpn",
+      "base_url": "https://webvpn.bhu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-a7074bd17fa2",
+      "name": "辽宁工程技术大学",
+      "province": "辽宁",
+      "type": "webvpn",
+      "base_url": "https://webvpn.lntu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-c895eee33353",
+      "name": "安康学院",
+      "province": "陕西",
+      "type": "webvpn",
+      "base_url": "https://webvpn.aku.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-8d980d2ad7c6",
+      "name": "西北大学",
+      "province": "陕西",
+      "type": "webvpn",
+      "base_url": "https://webvpn.nwu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-e23f1e45b87e",
+      "name": "西安交通大学",
+      "province": "陕西",
+      "type": "webvpn",
+      "base_url": "https://webvpn.xjtu.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-0b25b9a94cea",
+      "name": "西安建筑科技大学",
+      "province": "陕西",
+      "type": "webvpn",
+      "base_url": "https://webvpn.xauat.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-bd77f2205787",
+      "name": "西安欧亚学院",
+      "province": "陕西",
+      "type": "webvpn",
+      "base_url": "https://webvpn.eurasia.edu",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-019801721aa5",
+      "name": "西安理工大学",
+      "province": "陕西",
+      "type": "webvpn",
+      "base_url": "https://webvpn.xaut.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-ff488ac51414",
+      "name": "西安科技大学",
+      "province": "陕西",
+      "type": "webvpn",
+      "base_url": "https://webvpn.xust.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-3de9e76df07f",
+      "name": "西安航空学院",
+      "province": "陕西",
+      "type": "webvpn",
+      "base_url": "https://webvpn.xaau.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    {
+      "id": "catalog-fb6b18752fd6",
+      "name": "西安财经大学",
+      "province": "陕西",
+      "type": "webvpn",
+      "base_url": "https://webvpn.xaufe.edu.cn",
+      "origin": "catalog",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    }
+  ],
+  "templates": {
+    "webvpn": {
+      "id": "my-school",
+      "name": "我的学校",
+      "province": "省份",
+      "type": "webvpn",
+      "base_url": "https://webvpn.example.edu.cn",
+      "crypto_key": "wrdvpnisthebest!",
+      "crypto_iv": "wrdvpnisthebest!"
+    },
+    "ezproxy": {
+      "id": "my-ezproxy",
+      "name": "我的学校 EZProxy",
+      "province": "省份",
+      "type": "ezproxy",
+      "base_url": "https://ezproxy.example.edu/login",
+      "proxy_template": "https://ezproxy.example.edu/login?url={url}"
+    },
+    "easyconnect_or_atrust": {
+      "id": "my-campus-connector",
+      "name": "我的学校校园 VPN",
+      "province": "省份",
+      "type": "easyconnect",
+      "gateway": "https://vpn.example.edu.cn",
+      "connector_url": ""
+    }
+  }
+}
