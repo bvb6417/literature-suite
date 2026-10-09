@@ -169,6 +169,8 @@ literature-suite/
 
 ## 致谢与许可证
 
+本项目的主要代码由作者与 [OpenAI Codex](https://openai.com/codex/)（GPT）协作开发，开源整理、文档与测试由 [Claude Code](https://claude.com/claude-code) 协助完成。
+
 - [ScanSciPDF](https://github.com/Rimagination/scansci-pdf)（Apache-2.0）：学校接入参数来源，以及 ScienceDirect 机构回退思路的参考。
 - [Azure ttk theme](https://github.com/rdbende/Azure-ttk-theme)（MIT）：界面主题。
 

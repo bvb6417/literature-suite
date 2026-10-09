@@ -13,6 +13,8 @@ metadata_library.sqlite3*
 *.csv
 
 # Python / build output
+.uv-packager/
+py简洁打包配置.json
 __pycache__/
 *.py[cod]
 build/
