@@ -26,7 +26,7 @@ if str(SOURCE_DIR) not in sys.path:
 def main(argv=None):
     args = list(sys.argv[1:] if argv is None else argv)
     if not args:
-        from suite_gui import launch
+        from preview_app import launch
         return launch()
     from suite_cli import main as cli_main
     return cli_main(args)

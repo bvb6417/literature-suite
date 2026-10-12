@@ -1,3 +1,4 @@
+from preview_popups import ThemedCombobox, ThemedMenu
 from suite_search import *
 # Independent online-only UI. No SQLite, PDF scanning or local library imports.
 import os
@@ -6,6 +7,7 @@ import queue
 import webbrowser
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
+from preview_dialogs import messagebox
 from tkinter import font as tkfont
 
 COLUMNS = ('status', 'title', 'doi', 'authors', 'year', 'journal', 'volume', 'issue',
@@ -113,7 +115,7 @@ class SearchPanel(ttk.Frame):
         self.search_entry = ttk.Entry(row, textvariable=self.query)
         self.search_entry.grid(row=0, column=1, sticky='ew', padx=(0,gap))
         self.search_entry.bind('<Return>', self.start_search)
-        self.mode_box = ttk.Combobox(row, textvariable=self.mode, values=['自动识别','标题','关键词','DOI'], state='readonly', width=9)
+        self.mode_box = ThemedCombobox(row, textvariable=self.mode, values=['自动识别','标题','关键词','DOI'], state='readonly', width=9)
         self.mode_box.grid(row=0, column=2, padx=(0,gap))
         self.search_button = ttk.Button(row, text='检索', width=10, command=self.start_search)
         self.search_button.grid(row=0, column=3)
@@ -138,9 +140,10 @@ class SearchPanel(ttk.Frame):
         ttk.Button(bar, text='复制 DOI', width=10, command=self.copy_dois).pack(side='left', padx=gap)
         ttk.Button(bar, text='查看详情', width=10, command=self.detail).pack(side='left')
         self.export_scope = tk.StringVar(value='选中记录')
-        ttk.Combobox(bar, textvariable=self.export_scope, values=['选中记录','全部结果'], state='readonly', width=10).pack(side='right')
+        ThemedCombobox(bar, textvariable=self.export_scope, values=['选中记录','全部结果'], state='readonly', width=10).pack(side='right')
         ttk.Label(bar, text='导出范围').pack(side='right', padx=gap)
-        frame = ttk.Frame(main)
+        from switch_lite import Card
+        frame = Card(main,padding=10)
         frame.grid(row=3, column=0, sticky='nsew')
         frame.columnconfigure(0, weight=1)
         frame.rowconfigure(0, weight=1)
@@ -149,14 +152,14 @@ class SearchPanel(ttk.Frame):
                   'volume':45,'issue':45,'pages':100,'article_number':95,'date':100,
                   'journal_abbreviation':150,'issn':110,'language':65,'publisher':140,'abstract':350,'sources':160}
         self.column_vars = {}
-        self.column_menu = tk.Menu(self, tearoff=False)
+        self.column_menu = ThemedMenu(self, tearoff=False)
         configured = (self.config_data.get('literature_search') or {}).get('visible_columns', DEFAULT_COLUMNS)
         if not isinstance(configured, (list,tuple)):
             configured = DEFAULT_COLUMNS
         for column in COLUMNS:
             label = COLUMN_LABELS[column].split('（')[0]
             self.tree.heading(column, text=label, command=lambda c=column:self.sort(c))
-            self.tree.column(column, width=round(widths[column]*self.ui_scale), minwidth=45, stretch=column=='title',
+            self.tree.column(column, width=round(widths[column]*self.ui_scale), minwidth=45, stretch=False,
                              anchor='center' if column in ('status','year','volume','issue','pages','article_number','date') else 'w')
             self.column_vars[column] = tk.BooleanVar(value=column in configured or column in ('title','doi'))
             self.column_menu.add_checkbutton(label=label, variable=self.column_vars[column],
@@ -172,7 +175,7 @@ class SearchPanel(ttk.Frame):
         self.tree.bind('<Button-3>',self.context)
         self.tree.bind('<Control-a>',self.select_all)
         self.tree.bind('<<TreeviewSelect>>',lambda event:self.update_count())
-        self.row_menu = tk.Menu(self,tearoff=False)
+        self.row_menu = ThemedMenu(self,tearoff=False)
         self.row_menu.add_command(label='复制标题',command=lambda:self.copy_field('title'))
         self.row_menu.add_command(label='复制 DOI',command=self.copy_dois)
         self.row_menu.add_command(label='元数据详情',command=self.detail)
@@ -408,7 +411,7 @@ class SearchPanel(ttk.Frame):
         form.columnconfigure(1,weight=1)
         for row,field in enumerate(EXPORT_FIELDS):
             ttk.Label(form,text=LABELS[field].split('（')[0]).grid(row=row,column=0,sticky='nw',padx=(0,12),pady=5)
-            box=tk.Text(form,height=5 if field=='abstract' else (2 if field in ('authors','title') else 1),wrap='word')
+            box=RoundedText(form,height=5 if field=='abstract' else (2 if field in ('authors','title') else 1),wrap='word')
             box.grid(row=row,column=1,sticky='ew',pady=5)
             value=record.get(field)
             box.insert('1.0','; '.join(value) if isinstance(value,list) else (value or '（来源未提供）'))
@@ -416,7 +419,7 @@ class SearchPanel(ttk.Frame):
             ttk.Label(form,text=record.get('field_sources',{}).get(field,'')).grid(row=row,column=2,sticky='nw',padx=(8,0),pady=5)
         log='\n'.join(f"{a['provider']}：{a['result']} ({a.get('elapsed_seconds',0)}s)" for a in record.get('attempts',[]))
         ttk.Label(form,text='查询记录').grid(row=len(EXPORT_FIELDS),column=0,sticky='nw',pady=12)
-        box=tk.Text(form,height=6,wrap='word')
+        box=RoundedText(form,height=6,wrap='word')
         box.grid(row=len(EXPORT_FIELDS),column=1,columnspan=2,sticky='ew',pady=12)
         box.insert('1.0',(log or '检索来源：'+' / '.join(record.get('sources',[])))+'\n拓展关系：'+' / '.join(record.get('relation',[]))+'\n种子：'+'; '.join(record.get('seed_dois',[])))
         box.configure(state='disabled')

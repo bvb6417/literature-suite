@@ -1835,6 +1835,55 @@ def verification_item_from_result(
     }
 
 
+def cached_record(
+    doi: str, output_dir: Path, config: dict[str, Any], *,
+    overwrite: bool, output_format: str,
+) -> dict[str, Any] | None:
+    """Resolve local full text before any session check, worker or network call."""
+    if overwrite:
+        return None
+    from suite_settings import pdf_directory
+
+    output_path = output_path_for(doi, output_dir, output_format)
+    roots = list(dict.fromkeys((output_dir.resolve(), pdf_directory(config),
+                               (APP_DIR / "downloads").resolve())))
+    def candidates():
+        yield output_path
+        for root in roots:
+            yield root / output_path.name
+        # Only walk batch subdirectories if the direct paths did not match.
+        filename = output_path.name.casefold()
+        for root in roots:
+            if root.is_dir():
+                yield from (path for path in root.rglob("*")
+                            if path.name.casefold() == filename and path.is_file())
+    seen: set[Path] = set()
+    for path in candidates():
+        resolved = path.resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        if not path.is_file():
+            continue
+        info = pdf_info(path) if output_format == "pdf" else xml_fulltext_info(path)
+        if not info.get("valid"):
+            continue
+        identity = (pdf_identity_info(path, doi) if output_format == "pdf"
+                    else {"status": "not_applicable", "match": None})
+        if identity.get("match") is False:
+            LOG.warning("[%s] cached PDF identity mismatch: %s", doi, identity.get("reason"))
+            continue
+        if resolved != output_path.resolve():
+            # Honor --output-dir while keeping the library's original intact.
+            atomic_write(output_path, path.read_bytes())
+        return {
+            "ok": True, "doi": doi, "source": "cache",
+            "path": str(output_path.resolve()), "cache_path": str(resolved),
+            "identity_validation": identity, **info, "attempts": [],
+        }
+    return None
+
+
 def download_record(
     doi: str,
     output_dir: Path,
@@ -1846,35 +1895,10 @@ def download_record(
     progress: Callable[[str, str], None] | None = None,
 ) -> dict[str, Any]:
     output_path = output_path_for(doi, output_dir, output_format)
-    if output_path.exists() and not overwrite:
-        info = (
-            pdf_info(output_path)
-            if output_format == "pdf"
-            else xml_fulltext_info(output_path)
-        )
-        if info.get("valid"):
-            identity = (
-                pdf_identity_info(output_path, doi)
-                if output_format == "pdf"
-                else {"status": "not_applicable", "match": None}
-            )
-            if identity.get("match") is False:
-                LOG.warning(
-                    "[%s] cached PDF identity mismatch: %s",
-                    doi,
-                    identity.get("reason"),
-                )
-                output_path.unlink(missing_ok=True)
-            else:
-                return {
-                    "ok": True,
-                    "doi": doi,
-                    "source": "cache",
-                    "path": str(output_path.resolve()),
-                    "identity_validation": identity,
-                    **info,
-                    "attempts": [],
-                }
+    cached = cached_record(doi, output_dir, config, overwrite=overwrite,
+                           output_format=output_format)
+    if cached is not None:
+        return cached
 
     all_attempts: list[dict[str, Any]] = []
     if (
@@ -2441,19 +2465,6 @@ def run_download(args: argparse.Namespace) -> int:
         return 2
     output_dir = args.output_dir.expanduser().resolve()
     preflight: dict[str, Any] = {}
-    if "webvpn" in sources:
-        preflight["webvpn"] = webvpn_session_status(config)
-        config.setdefault("_runtime", {})["institution_status"] = preflight[
-            "webvpn"
-        ]
-        if (
-            not preflight["webvpn"].get("valid")
-            and not preflight["webvpn"].get("can_attempt")
-        ):
-            LOG.warning(
-                "学校机构会话不可用：%s；将先尝试其他来源。需要时运行 login 命令刷新。",
-                preflight["webvpn"].get("message"),
-            )
     if json_lines:
         emit_event(
             {
@@ -2485,15 +2496,31 @@ def run_download(args: argparse.Namespace) -> int:
                 }
             )
         try:
-            result = download_record_with_timeout(
-                doi,
-                output_dir,
-                args.config,
-                sources,
-                overwrite=args.overwrite,
-                output_format=args.format,
-                timeout_seconds=paper_timeout_seconds,
-            )
+            result = cached_record(doi, output_dir, config,
+                                   overwrite=args.overwrite, output_format=args.format)
+            if result is None:
+                if "webvpn" in sources and "webvpn" not in preflight:
+                    preflight["webvpn"] = webvpn_session_status(config)
+                    config.setdefault("_runtime", {})["institution_status"] = preflight[
+                        "webvpn"
+                    ]
+                    if (
+                        not preflight["webvpn"].get("valid")
+                        and not preflight["webvpn"].get("can_attempt")
+                    ):
+                        LOG.warning(
+                            "学校机构会话不可用：%s；将先尝试其他来源。需要时运行 login 命令刷新。",
+                            preflight["webvpn"].get("message"),
+                        )
+                result = download_record_with_timeout(
+                    doi,
+                    output_dir,
+                    args.config,
+                    sources,
+                    overwrite=args.overwrite,
+                    output_format=args.format,
+                    timeout_seconds=paper_timeout_seconds,
+                )
         except Exception as exc:
             result = {
                 "ok": False,

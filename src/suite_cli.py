@@ -142,7 +142,7 @@ def main(argv):
             return 2
     args=parser().parse_args(argv)
     if args.command=='gui':
-        from suite_gui import launch
+        from preview_app import launch
         return launch()
     try:
         path=absolute_path(args.config)

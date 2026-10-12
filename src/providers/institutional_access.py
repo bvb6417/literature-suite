@@ -242,10 +242,22 @@ def schools_path_from_config(config):
     from suite_paths import APP_DIR, RESOURCE_DIR
     settings = config.get('institution') or {}
     path = Path(str(settings.get('schools_file') or 'schools.json')).expanduser()
-    if path.is_absolute():
-        return path
-    external = APP_DIR / path
-    return external if external.exists() else RESOURCE_DIR / path
+    external = (path if path.is_absolute() else APP_DIR / path).resolve()
+    # Old installations saved an absolute root-level path. Prefer the moved
+    # catalog even while a workaround copy remains beside the entry script.
+    standard_paths = {
+        (APP_DIR / 'schools.json').resolve(),
+        (APP_DIR / 'src' / 'schools.json').resolve(),
+        (RESOURCE_DIR / 'schools.json').resolve(),
+    }
+    if external in standard_paths:
+        for candidate in (APP_DIR / 'src' / 'schools.json', RESOURCE_DIR / 'schools.json',
+                          APP_DIR / 'schools.json'):
+            if candidate.is_file():
+                return candidate.resolve()
+        return (RESOURCE_DIR / 'schools.json').resolve()
+    # Explicit custom catalogs remain relative to the application, never cwd.
+    return external
 
 
 def selected_school(

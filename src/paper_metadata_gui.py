@@ -5,6 +5,8 @@ Python 3.10+, requests; optional pypdf for recovering damaged DOI filenames.
 Shares config.local.json with the downloader; backend is independent of Tk.
 """
 from __future__ import annotations
+from switch_lite_widgets import RoundedText
+from preview_popups import ThemedCombobox, ThemedMenu
 
 import argparse
 import copy
@@ -33,6 +35,7 @@ except ImportError:
     if __name__ == '__main__':
         import tkinter as tk
         from tkinter import messagebox
+        from preview_dialogs import messagebox
         root = tk.Tk()
         root.withdraw()
         messagebox.showerror('无法加载模块', '请将 paper_metadata_core.py 与本脚本放在同一目录。\n系统 Python 需安装 requests；PDF 提取需 pypdf。')
@@ -153,7 +156,8 @@ def column_value(record, column):
     if column == 'authors':
         return '; '.join(record.get('authors') or [])
     if column == 'title':
-        return record.get('title') or Path(next(iter(record.get('files') or []), '')).name
+        return (record.get('title') or Path(next(iter(record.get('files') or []), '')).name
+                or next(iter(record.get('imported_file_names') or []),''))
     return str(record.get(column) or '')
 
 
@@ -215,6 +219,29 @@ class Library:
                 return paper, False
         return self.save({'doi': doi, 'doi_source': source, 'files': [target] if target else [],
                           'field_sources': {}}), True
+
+    def merge_placeholder(self, previous, target):
+        """Merge a proven PDF placeholder into its known DOI record atomically."""
+        if previous['id']==target['id']:return target
+        with self.connect() as db:
+            records={pk:json.loads(raw) for pk,raw in db.execute(
+                'SELECT id,data FROM papers WHERE id IN (?,?)',(previous['id'],target['id']))}
+            old=records.get(previous['id']);current=records.get(target['id'])
+            if old is None or current is None or old.get('doi') or not current.get('doi'):
+                return dict(current,id=target['id']) if current is not None else target
+            for field in ('files','imported_file_names'):
+                current[field]=list(dict.fromkeys([*(current.get(field) or []),*(old.get(field) or [])]))
+            for field in FIELDS:
+                if not current.get(field) and old.get(field):
+                    current[field]=old[field]
+                    source=(old.get('field_sources') or {}).get(field)
+                    if source:current.setdefault('field_sources',{})[field]=source
+            # Preserve all previous data/provenance, including any conflicting
+            # fields, instead of silently throwing information away.
+            current.setdefault('merged_pdf_records',[]).append(dict(old,id=previous['id']))
+            db.execute('UPDATE papers SET data=? WHERE id=?',(json.dumps(current,ensure_ascii=False),target['id']))
+            db.execute('DELETE FROM papers WHERE id=?',(previous['id'],))
+        return dict(current,id=target['id'])
 
     def link_local_pdfs(self, records, folder):
         """Attach DOI-named PDFs using known DOIs, without reversing lost punctuation."""
@@ -295,6 +322,8 @@ class Library:
                         target = self.save(target)
                         linked += 1
                     paper = target
+                    if previous is not None and previous['id']!=target['id']:
+                        paper=self.merge_placeholder(previous,target)
                 elif previous is not None:
                     previous.update(doi=doi, doi_source=source)
                     paper = self.save(previous)
@@ -434,6 +463,7 @@ def run_gui(base, parent=None):
     import tkinter as tk
     import tkinter.font as tkfont
     from tkinter import ttk, filedialog, messagebox
+    from preview_dialogs import messagebox
 
     enable_dpi_awareness()
     base = Path(base).resolve()
@@ -451,12 +481,12 @@ def run_gui(base, parent=None):
             self.variable = textvariable
             style = ttk.Style(self)
             line_height = tkfont.Font(font=entry_font).metrics('linespace')
-            self.text = tk.Text(self, height=1, width=1, wrap='none',
+            self.text = RoundedText(self, height=1, width=1, wrap='none',
                 font=entry_font, undo=True, borderwidth=0, highlightthickness=1,
                 background=style.lookup('TEntry', 'fieldbackground') or 'SystemWindow',
                 foreground=style.lookup('TEntry', 'foreground') or 'SystemWindowText',
                 highlightbackground='#B8B8B8', highlightcolor='#0078D7',
-                padx=4, pady=max(0, (height - line_height - 2) // 2))
+                padx=0, pady=0,padding=(round(9*self.winfo_fpixels('1i')/96),max(2,(height-line_height)//2)))
             self.text.pack(fill='both', expand=True)
             self.text.bind('<<Modified>>', self._on_modified)
             self.text.bind('<Control-a>', self._select_all)
@@ -525,12 +555,9 @@ def run_gui(base, parent=None):
                             f'+{max(0, (self.winfo_screenheight()-height)//2-20)}')
 
         def dialog(self, title, width=760, height=580):
-            window = tk.Toplevel(self)
-            window.title(title)
-            window.configure(background=self.panel_background)
-            self.size_window(window, width, height)
-            window.transient(self.winfo_toplevel())
-            window.grab_set()
+            from switch_lite import Modal
+            window = Modal(self, title, width=width, height=height)
+            window.after_idle(lambda: self.winfo_toplevel()._style_texts(window))
             return window
 
         def build_ui(self):
@@ -567,13 +594,14 @@ def run_gui(base, parent=None):
             self.search_entry = MultilineSearchEntry(actions, textvariable=self.query)
             self.search_entry.grid(row=0, column=6, sticky='ew', padx=(0, gap))
             self.filter = tk.StringVar(value='全部状态')
-            ttk.Combobox(actions, state='readonly', textvariable=self.filter, width=13,
+            ThemedCombobox(actions, state='readonly', textvariable=self.filter, width=13,
                          values=['全部状态', '待补全', '缺失部分', '已补全', '需填写 DOI']).grid(row=0, column=7)
             self.query.trace_add('write', lambda *_: self.refresh())
             self.filter.trace_add('write', lambda *_: self.refresh())
             self.scan_button = ttk.Button(actions, text='扫描 PDF', width=10, command=self.scan)
             self.scan_button.grid(row=0, column=0, padx=(0, gap))
-            table = ttk.Frame(main)
+            from switch_lite import Card
+            table = Card(main,padding=10)
             table.grid(row=3, column=0, sticky='nsew')
             table.columnconfigure(0, weight=1)
             table.rowconfigure(0, weight=1)
@@ -584,20 +612,20 @@ def run_gui(base, parent=None):
                       'publisher': 140, 'abstract': 350, 'updated_at': 175}
             self.column_vars = {}
             displayed = visible_columns(self.config_data['visible_columns'])
-            self.column_menu = tk.Menu(self, tearoff=False)
+            self.column_menu = ThemedMenu(self, tearoff=False)
             for key in COLUMNS:
                 width = widths[key]
                 label = COLUMN_LABELS[key].split('（')[0]
                 self.tree.heading(key, text=label, command=lambda column=key: self.sort_by(column))
                 alignment = 'center' if key in ('status', 'year', 'volume', 'issue', 'pages', 'article_number', 'date', 'language', 'updated_at') else 'w'
                 self.tree.column(key, width=round(width * self.ui_scale), minwidth=45,
-                                 stretch=key == 'title', anchor=alignment)
+                                 stretch=False, anchor=alignment)
                 self.column_vars[key] = tk.BooleanVar(value=key in displayed)
                 self.column_menu.add_checkbutton(label=label + ('（固定）' if key in FIXED_COLUMNS else ''),
                     variable=self.column_vars[key], state='disabled' if key in FIXED_COLUMNS else 'normal',
                     command=self.apply_columns)
             self.tree.configure(displaycolumns=displayed)
-            self.context_menu = tk.Menu(self, tearoff=False)
+            self.context_menu = ThemedMenu(self, tearoff=False)
             self.context_menu.add_command(label='复制标题', command=lambda: self.copy_field('title'), state='disabled')
             self.context_menu.add_command(label='复制 DOI', command=lambda: self.copy_field('doi'), state='disabled')
             self.context_menu.add_command(label='详情 / 编辑', command=self.edit, state='disabled')
@@ -692,21 +720,22 @@ def run_gui(base, parent=None):
                 self.tree.focus(row)
                 self.update_selection()
             self.context_menu.entryconfigure(2, state='normal' if row and not self.busy else 'disabled')
-            record = self.papers.get(row, {})
-            self.context_menu.entryconfigure(0, state='normal' if record.get('title') else 'disabled')
-            self.context_menu.entryconfigure(1, state='normal' if record.get('doi') else 'disabled')
+            records=self.selection()
+            self.context_menu.entryconfigure(0, state='normal' if any(r.get('title') for r in records) else 'disabled')
+            self.context_menu.entryconfigure(1, state='normal' if any(r.get('doi') for r in records) else 'disabled')
             try:
                 self.context_menu.tk_popup(event.x_root, event.y_root)
             finally:
                 self.context_menu.grab_release()
 
         def copy_field(self, field):
-            record = self.papers.get(self.context_item, {})
-            value = record.get(field)
-            if value:
+            selected=set(self.tree.selection())
+            values=[str(self.papers[pk][field]).strip() for pk in self.tree.get_children()
+                    if pk in selected and self.papers.get(pk,{}).get(field)]
+            if values:
                 self.clipboard_clear()
-                self.clipboard_append(str(value))
-                self.status.set('已复制' + LABELS[field])
+                self.clipboard_append('\n'.join(values))
+                self.status.set(f'已复制 {len(values)} 条'+LABELS[field])
 
         def apply_columns(self):
             for key in FIXED_COLUMNS:
@@ -855,7 +884,7 @@ def run_gui(base, parent=None):
                 messagebox.showerror('读取配置失败', str(error), parent=self)
                 return
             window = self.dialog('共用下载器配置', 720, 440)
-            form = ttk.Frame(window, padding=16)
+            form = ttk.Frame(window.body, padding=16)
             form.pack(fill='both', expand=True)
             form.columnconfigure(1, weight=1)
             variables = {}
@@ -886,24 +915,15 @@ def run_gui(base, parent=None):
                     window.destroy()
                 except Exception as error:
                     messagebox.showerror('保存失败', str(error), parent=window)
-            ttk.Button(form, text='保存', command=save).grid(row=8, column=1, sticky='e', pady=16)
+            window.primary.configure(text='保存', command=save)
 
         def edit(self):
             if self.busy or not self.selection():
                 return
             original = self.papers.get(self.context_item) if self.context_item in self.tree.selection() else self.selection()[0]
             window = self.dialog('编辑与详情', 880, 730)
-            area = ttk.Frame(window)
-            area.pack(fill='both', expand=True)
-            canvas = tk.Canvas(area, background=self.panel_background, highlightthickness=0)
-            canvas.pack(side='left', fill='both', expand=True)
-            scrollbar = ttk.Scrollbar(area, orient='vertical', command=canvas.yview)
-            scrollbar.pack(side='right', fill='y')
-            canvas.configure(yscrollcommand=scrollbar.set)
-            form = ttk.Frame(canvas, padding=12)
-            form_id = canvas.create_window((0, 0), window=form, anchor='nw')
-            form.bind('<Configure>', lambda _: canvas.configure(scrollregion=canvas.bbox('all')))
-            canvas.bind('<Configure>', lambda event: canvas.itemconfigure(form_id, width=event.width))
+            form = ttk.Frame(window.body, padding=12)
+            form.pack(fill='both', expand=True)
             form.columnconfigure(1, weight=1)
             ttk.Label(form, text='状态：' + status_of(original) + '\n缺失字段：' + missing_text(original),
                       wraplength=round(760 * self.ui_scale), justify='left').grid(
@@ -911,7 +931,7 @@ def run_gui(base, parent=None):
             inputs = {}
             for row, field in enumerate(('doi',) + FIELDS, 1):
                 ttk.Label(form, text=LABELS[field]).grid(row=row, column=0, sticky='nw', padx=(0, 12), pady=5)
-                entry = tk.Text(form, height=3 if field in ('authors', 'abstract') else 1, wrap='word')
+                entry = RoundedText(form, height=3 if field in ('authors', 'abstract') else 1, wrap='word')
                 entry.grid(row=row, column=1, sticky='ew', pady=5)
                 entry.insert('1.0', '\n'.join(original.get(field, [])) if field == 'authors' else original.get(field, ''))
                 inputs[field] = entry
@@ -922,7 +942,7 @@ def run_gui(base, parent=None):
             ttk.Label(form, text='PDF 与查询记录').grid(row=info_row, column=0, columnspan=3, sticky='w', pady=(12, 5))
             detail_frame = ttk.Frame(form)
             detail_frame.grid(row=info_row + 1, column=0, columnspan=3, sticky='ew')
-            detail = tk.Text(detail_frame, height=9, wrap='word')
+            detail = RoundedText(detail_frame, height=9, wrap='word')
             detail.pack(side='left', fill='both', expand=True)
             detail_scroll = ttk.Scrollbar(detail_frame, orient='vertical', command=detail.yview)
             detail_scroll.pack(side='right', fill='y')
@@ -957,7 +977,7 @@ def run_gui(base, parent=None):
                 self.library.save(paper)
                 self.refresh()
                 window.destroy()
-            ttk.Button(window, text='保存', command=save).pack(anchor='e', padx=12, pady=10)
+            window.primary.configure(text='保存', command=save)
 
         def open_pdf(self, event=None):
             if event is not None:
@@ -1029,6 +1049,7 @@ if __name__ == '__main__':
     except Exception as error:
         import tkinter as tk
         from tkinter import messagebox
+        from preview_dialogs import messagebox
         root = tk.Tk()
         root.withdraw()
         messagebox.showerror('文献库无法启动', f'{type(error).__name__}: {error}')

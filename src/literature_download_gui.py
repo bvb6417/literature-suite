@@ -2,6 +2,9 @@
 """Tkinter frontend that invokes literature_download_cli.py as a subprocess."""
 
 from __future__ import annotations
+from switch_lite_widgets import RoundedText
+from preview_popups import ThemedCombobox, ThemedMenu
+from preview_widgets import SectionCard, initial_window_bounds
 
 import json
 import os
@@ -18,6 +21,7 @@ from typing import Any
 
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+from preview_dialogs import messagebox
 
 
 from suite_paths import APP_DIR
@@ -168,19 +172,19 @@ class ModernProgressBar(tk.Canvas):
         width = max(1, self.winfo_width())
         height = max(8, self.winfo_height())
         y1, y2 = 2, height - 2
-        self._rounded_rectangle(0, y1, width, y2, "#E2E8F0")
+        self._rounded_rectangle(0, y1, width, y2, "#F1F1F4")
         if self._mode == "indeterminate":
             segment = max(28, width * 0.28)
             start = (width + segment) * self._phase - segment
             end = min(width, start + segment)
             start = max(0, start)
             if end > start:
-                self._rounded_rectangle(start, y1, end, y2, "#3B82F6")
+                self._rounded_rectangle(start, y1, end, y2, "#087DFF")
             return
         fraction = min(1.0, max(0.0, self._value / max(1.0, self._maximum)))
         fill_width = width * fraction
         if fill_width > 1:
-            self._rounded_rectangle(0, y1, fill_width, y2, "#2563EB")
+            self._rounded_rectangle(0, y1, fill_width, y2, "#087DFF")
 
     def configure(self, cnf: Any = None, **kwargs: Any) -> Any:
         if cnf:
@@ -279,15 +283,8 @@ class DownloadApp(tk.Tk):
         except tk.TclError:
             pass
         self.title("SCI 全文下载器")
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        # Use a comfortable desktop size based on the manually adjusted layout;
-        # only shrink when the physical screen cannot accommodate it.
-        window_width = max(1100, min(1500, screen_width - 80))
-        window_height = max(800, min(1000, screen_height - 80))
-        left = max(0, (screen_width - window_width) // 2)
-        top = max(0, (screen_height - window_height) // 2)
-        self.geometry(f"{window_width}x{window_height}+{left}+{top}")
+        window_width,window_height,left,top = initial_window_bounds(self,2250,1200)
+        self.geometry(f"{window_width}x{window_height}{left:+d}{top:+d}")
         self.minsize(min(1180, window_width), min(820, window_height))
         self.configure(background="#FFFFFF")
         self._window_icon = self._make_search_icon()
@@ -755,7 +752,7 @@ class DownloadApp(tk.Tk):
         tab.columnconfigure(0, weight=1)
         tab.rowconfigure(1, weight=1)
 
-        options = ttk.LabelFrame(tab, text="下载设置", padding=12)
+        options = SectionCard(tab, text="下载设置", padding=12)
         options.grid(row=0, column=0, padx=4, pady=(0, 10), sticky="ew")
         options.columnconfigure(1, weight=1)
         self.status_label = ttk.Label(
@@ -887,10 +884,10 @@ class DownloadApp(tk.Tk):
         main.grid(row=1, column=0, padx=4, pady=(0, 8), sticky="nsew")
         main.bind("<Configure>", self._schedule_pane_ratio, add="+")
 
-        input_box = ttk.LabelFrame(main, text="DOI（每行一个；支持空格/逗号分隔）", padding=10)
+        input_box = SectionCard(main, text="DOI（每行一个；支持空格/逗号分隔）", padding=10)
         input_box.rowconfigure(0, weight=1)
         input_box.columnconfigure(0, weight=1)
-        self.doi_text = tk.Text(
+        self.doi_text = RoundedText(
             input_box,
             width=1,
             height=7,
@@ -924,7 +921,7 @@ class DownloadApp(tk.Tk):
         ttk.Button(action_bar, text="清空", command=lambda: self.doi_text.delete("1.0", "end")).pack(side="left", padx=8)
         main.add(input_box, weight=1)
 
-        result_box = ttk.LabelFrame(main, text="下载结果", padding=8)
+        result_box = SectionCard(main, text="下载结果", padding=8)
         result_box.rowconfigure(0, weight=1)
         result_box.columnconfigure(0, weight=1)
         columns = ("doi", "status", "source", "size", "elapsed", "message")
@@ -969,7 +966,7 @@ class DownloadApp(tk.Tk):
         self.result_tree.bind("<Button-3>", self._show_result_context_menu)
         self.result_tree.bind("<Shift-F10>", self._show_result_context_menu)
         self.result_tree.bind("<Control-a>", self._select_all_results)
-        self.result_context_menu = tk.Menu(self, tearoff=False)
+        self.result_context_menu = ThemedMenu(self, tearoff=False)
         self.result_context_menu.add_command(
             label="重试下载", command=self._retry_selected_download
         )
@@ -1003,6 +1000,13 @@ class DownloadApp(tk.Tk):
             bounds = self.settings_canvas.bbox(self._settings_canvas_window)
             content_height = 0 if not bounds else bounds[3] - bounds[1]
             viewport_height = self.settings_canvas.winfo_height()
+            # Never let a short page scroll to a negative origin. Canvas can
+            # otherwise bottom-align its small scrollregion and expose a gap.
+            content_width = 0 if not bounds else bounds[2]-bounds[0]
+            self.settings_canvas.configure(scrollregion=(0,0,
+                max(content_width,self.settings_canvas.winfo_width()),max(content_height,viewport_height)))
+            if content_height <= viewport_height or self.settings_canvas.canvasy(0)<0:
+                self.settings_canvas.yview_moveto(0)
             needs_scrollbar = content_height > viewport_height + 2
             if needs_scrollbar and not self._settings_scroll_visible:
                 self.settings_scrollbar.grid(row=0, column=1, sticky="ns")
@@ -1015,7 +1019,6 @@ class DownloadApp(tk.Tk):
             pass
 
     def _on_settings_content_configure(self, _event: tk.Event[Any]) -> None:
-        self.settings_canvas.configure(scrollregion=self.settings_canvas.bbox("all"))
         self._schedule_settings_scrollbar_update()
 
     def _on_settings_canvas_configure(self, event: tk.Event[Any]) -> None:
@@ -1071,7 +1074,7 @@ class DownloadApp(tk.Tk):
             add="+",
         )
 
-        access = ttk.LabelFrame(tab, text="来源与机构", padding=14)
+        access = SectionCard(tab, text="来源与机构", padding=14)
         access.grid(row=0, column=0, sticky="ew")
         access.columnconfigure(1, weight=1)
         ttk.Label(
@@ -1112,7 +1115,7 @@ class DownloadApp(tk.Tk):
         school_bar = ttk.Frame(access, style="Surface.TFrame")
         school_bar.grid(row=1, column=1, padx=8, pady=(12, 0), sticky="ew")
         school_bar.columnconfigure(0, weight=1)
-        self.school_combo = ttk.Combobox(
+        self.school_combo = ThemedCombobox(
             school_bar,
             textvariable=self.school_query,
             state="normal",
@@ -1160,7 +1163,7 @@ class DownloadApp(tk.Tk):
             sticky="ew",
         )
 
-        credentials = ttk.LabelFrame(tab, text="API 与联系信息", padding=14)
+        credentials = SectionCard(tab, text="API 与联系信息", padding=14)
         credentials.grid(row=1, column=0, pady=(12, 0), sticky="ew")
         credentials.columnconfigure(1, weight=1)
         credentials.columnconfigure(4, weight=1)
@@ -1245,7 +1248,7 @@ class DownloadApp(tk.Tk):
         )
         self._toggle_key_visibility()
 
-        tuning = ttk.LabelFrame(tab, text="下载内核配置", padding=14)
+        tuning = SectionCard(tab, text="下载内核配置", padding=14)
         tuning.grid(row=2, column=0, pady=(12, 0), sticky="ew")
         tuning.columnconfigure(1, weight=1, uniform="config_value")
         tuning.columnconfigure(4, weight=1, uniform="config_value")
@@ -1307,7 +1310,7 @@ class DownloadApp(tk.Tk):
         )
         self.save_config_button.grid(row=0, column=1, padx=(12, 0), sticky="e")
 
-        note = ttk.LabelFrame(tab, text="说明", padding=12)
+        note = SectionCard(tab, text="说明", padding=12)
         note.grid(row=3, column=0, pady=(12, 0), sticky="ew")
         ttk.Label(
             note,

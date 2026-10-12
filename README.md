@@ -5,6 +5,7 @@
 - **双击就是 GUI**：四个页面（文献检索 / 元数据补全 / 文献下载 / 全局配置）共用一份配置。
 - **带参数就是 CLI**：所有命令输出稳定 JSON，可以直接交给 Codex、Claude Code 等 AI Agent 调用。
 - **只走合法来源**：开放获取全文、出版社官方 API，以及你本人所在学校已经购买的机构订阅。
+- **新界面**：用 [TkWebUI](https://github.com/bvb6417/tkwebui)（同作者的 tkinter 现代 Web 风主题）重做，可折叠侧栏、统一的菜单与下拉浮层，界面部分只依赖 Python 标准库。
 
 > A desktop + CLI toolkit for literature search, metadata completion, legal full-text download
 > (open access, publisher APIs, your own institutional subscription) and RIS export to Zotero.
@@ -28,6 +29,8 @@
 - 本地文献库（SQLite）可扫描 PDF 目录，按 DOI 自动关联本地 PDF。
 - 一键导出 RIS，Zotero、EndNote、NoteExpress 等都能直接导入。
 
+![元数据补全](docs/images/metadata.png)
+
 ### 3. 文献下载
 
 按顺序级联，任何一级成功就立即停止：
@@ -46,7 +49,17 @@
 
 PDF 目录、检索上限、联系邮箱、各类 API Key、机构接入方式都在这里设置。Key 默认以 `*` 隐藏，保存到程序目录的 `config.local.json`（已被 `.gitignore` 忽略）。
 
+![全局配置](docs/images/settings.png)
+
 ## 快速开始
+
+### 方式一：下载打包版（无需 Python）
+
+到 [Releases](https://github.com/bvb6417/literature-suite/releases/latest) 下载最新的 zip，解压到任意文件夹，双击 `文献工作台.exe` 即可打开 GUI。压缩包里同时附带完整源码和配置模板。
+
+打包版同样支持命令行。它是无控制台窗口的程序，输出需要重定向到文件，或由脚本 / AI Agent 捕获，例如 `文献工作台.exe keyword "leak detection" --limit 20 > result.json`。配置、文献库和下载的 PDF 都保存在 exe 所在文件夹。
+
+### 方式二：从源码运行
 
 需要 Windows + Python 3.10 及以上（Tkinter 随官方 Python 安装包提供）。机构浏览器回退和 XML 重建需要本机安装 Chrome 或 Edge。
 
@@ -57,7 +70,7 @@ python -m pip install -r requirements.txt
 python literature_suite.py
 ```
 
-不带参数运行即打开 GUI。第一次使用不填任何 Key 也能检索和下载开放全文；需要更多来源时，在“全局配置”页填写，或复制 `config.example.json` 为 `config.local.json` 后修改。
+不带参数运行即打开 GUI（双击 `main.py` 也可以）。第一次使用不填任何 Key 也能检索和下载开放全文；需要更多来源时，在“全局配置”页填写，或复制 `config.example.json` 为 `config.local.json` 后修改。
 
 | 配置项 | 作用 | 是否必需 |
 | --- | --- | --- |
@@ -120,7 +133,7 @@ CLI 不需要交互，输出是结构化 JSON，可以直接写进 Agent 的指�
 
 ## 数据保存在哪里
 
-程序写入的所有内容都在 `literature_suite.py` 同目录，不会写到系统盘的用户目录：
+程序写入的所有内容都在入口（`literature_suite.py`、`main.py` 或 `文献工作台.exe`）所在目录，不会写到系统盘的用户目录：
 
 | 路径 | 内容 |
 | --- | --- |
@@ -129,6 +142,7 @@ CLI 不需要交互，输出是结构化 JSON，可以直接写进 Agent 的指�
 | `metadata_library.sqlite3` | 元数据补全页的本地文献库 |
 | `state/` | 各学校登录 Cookie、MDPI 期刊缓存 |
 | `browser-data/` | 机构登录与 ScienceDirect 回退使用的独立浏览器配置 |
+| `preview_ui.json` | 界面列宽等显示设置 |
 | `.tmp/` | 运行时临时文件 |
 
 以上都已写入 `.gitignore`。程序只保存会话 Cookie，不读取、不保存学校账号密码。
@@ -138,10 +152,15 @@ CLI 不需要交互，输出是结构化 JSON，可以直接写进 Agent 的指�
 ```text
 literature-suite/
 ├── literature_suite.py        # 入口：无参数打开 GUI，带子命令调用 CLI
+├── main.py                    # 双击入口，也是打包版的入口
 ├── config.example.json        # 无密钥配置模板
 ├── requirements.txt
 ├── src/
-│   ├── suite_gui.py           # 统一 GUI（四个页面）
+│   ├── preview_app.py         # 新版界面外壳：侧栏、标题栏与页面样式
+│   ├── preview_*.py           # 新版界面的对话框、浮层与控件
+│   ├── switch_lite*.py        # TkWebUI 早期版本（主题与基础控件）
+│   ├── window_chrome.py       # 一体化窗口标题栏（Windows）
+│   ├── suite_gui.py           # 四个页面的业务逻辑
 │   ├── suite_cli.py           # 统一 CLI
 │   ├── suite_search.py        # 在线检索与元数据合并
 │   ├── suite_search_ui.py     # 文献检索页
@@ -150,7 +169,7 @@ literature-suite/
 │   ├── literature_download_*.py  # 下载内核与下载页
 │   ├── providers/             # Elsevier、MDPI、机构接入、浏览器 CDP 等适配器
 │   ├── schools.json           # 学校公开接入参数
-│   └── themes/azure/          # Azure ttk 主题
+│   └── themes/azure/          # 旧版界面使用的 Azure ttk 主题
 ├── skills/literature-suite/SKILL.md
 ├── docs/images/
 └── third_party_licenses/
@@ -172,6 +191,7 @@ literature-suite/
 本项目的主要代码由作者与 [OpenAI Codex](https://openai.com/codex/)（GPT）协作开发，开源整理、文档与测试由 [Claude Code](https://claude.com/claude-code) 协助完成。
 
 - [ScanSciPDF](https://github.com/Rimagination/scansci-pdf)（Apache-2.0）：学校接入参数来源，以及 ScienceDirect 机构回退思路的参考。
-- [Azure ttk theme](https://github.com/rdbende/Azure-ttk-theme)（MIT）：界面主题。
+- [TkWebUI](https://github.com/bvb6417/tkwebui)（MIT，同作者）：新版界面使用的主题与控件，`src/switch_lite*.py` 为其早期版本。
+- [Azure ttk theme](https://github.com/rdbende/Azure-ttk-theme)（MIT）：旧版界面主题，仍随源码保留在 `src/themes/azure/`。
 
 详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。本项目以 [Apache License 2.0](LICENSE) 发布。

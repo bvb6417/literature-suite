@@ -5,8 +5,12 @@ import sys
 RESOURCE_DIR = Path(__file__).resolve().parent
 # literature_suite.py sets both variables; the fallbacks keep the modules
 # importable straight from a source checkout (src/ beside the entry file).
-APP_DIR = Path(os.environ.get('LITERATURE_SUITE_HOME') or RESOURCE_DIR.parent).resolve()
-ENTRY_PATH = Path(os.environ.get('LITERATURE_SUITE_ENTRY') or APP_DIR / 'literature_suite.py').resolve()
+APP_DIR = Path(os.environ.get('LITERATURE_SUITE_HOME') or (
+    Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else RESOURCE_DIR.parent
+)).resolve()
+ENTRY_PATH = Path(os.environ.get('LITERATURE_SUITE_ENTRY') or (
+    sys.executable if getattr(sys, 'frozen', False) else APP_DIR / 'literature_suite.py'
+)).resolve()
 
 
 def absolute_path(value, base=APP_DIR):

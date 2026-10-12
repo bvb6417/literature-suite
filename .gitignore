@@ -8,6 +8,8 @@ state/
 browser-data/
 .tmp/
 .literature_suite/
+preview_ui.json
+*.log
 metadata_library.sqlite3*
 *.ris
 *.csv
@@ -15,6 +17,7 @@ metadata_library.sqlite3*
 # Python / build output
 .uv-packager/
 py简洁打包配置.json
+runtime-requirements.txt
 __pycache__/
 *.py[cod]
 build/

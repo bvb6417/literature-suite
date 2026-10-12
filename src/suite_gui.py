@@ -1,7 +1,9 @@
+from preview_widgets import SectionCard
 import copy
 import json
 import tkinter as tk
 from tkinter import ttk, messagebox
+from preview_dialogs import messagebox
 from pathlib import Path
 import literature_download_gui as download_gui
 import paper_metadata_gui as metadata_gui
@@ -74,7 +76,7 @@ class SuiteApp(download_gui.DownloadApp):
         settings_page=container.master
         for child in settings_page.grid_slaves():
             child.grid_configure(row=int(child.grid_info()['row'])+1)
-        shared=ttk.LabelFrame(settings_page,text='通用设置',padding=14)
+        shared=SectionCard(settings_page,text='通用设置',padding=14)
         shared.grid(row=0,column=0,sticky='ew',pady=(0,12))
         shared.columnconfigure(1,weight=1)
         ttk.Label(shared,text='PDF 目录',style='Card.TLabel').grid(row=0,column=0,sticky='w',padx=(0,10))
