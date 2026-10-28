@@ -453,6 +453,45 @@ def _looks_like_login_response(response: requests.Response, html_text: str) -> b
     return any(marker in lower_html for marker in LOGIN_HTML_MARKERS)
 
 
+WENGINE_CRYPT_PATTERN = re.compile(
+    r"__vpn_host_crypt_(key|iv)\s*=\s*['\"]([^'\"]+)['\"]"
+)
+GATEWAY_CRYPTO_RETRY_SECONDS = 60.0
+_gateway_crypto_cache: dict[str, tuple[bytes, bytes]] = {}
+_gateway_crypto_failures: dict[str, float] = {}
+
+
+def gateway_host_crypto(base_url: str, timeout: float = 15.0) -> tuple[bytes, bytes] | None:
+    """Read the hostname AES key/IV that a WEngine gateway actually uses.
+
+    WEngine injects ``__vpn_host_crypt_key``/``__vpn_host_crypt_iv`` into every
+    page it serves, including the anonymous login page.  Catalog values go
+    stale when a school replaces the default key (西北大学 uses its own), and a
+    wrong key makes every proxied URL fall back to the gateway home page.
+    """
+    cached = _gateway_crypto_cache.get(base_url)
+    if cached:
+        return cached
+    failed_at = _gateway_crypto_failures.get(base_url)
+    if failed_at and time.monotonic() - failed_at < GATEWAY_CRYPTO_RETRY_SECONDS:
+        return None
+    try:
+        with requests.Session() as session:
+            session.trust_env = False
+            session.headers["User-Agent"] = USER_AGENT
+            response = session.get(base_url.rstrip("/") + "/", timeout=timeout)
+            values = dict(WENGINE_CRYPT_PATTERN.findall(_response_html_preview(response)))
+    except requests.RequestException:
+        values = {}
+    key = values.get("key", "").encode("utf-8")
+    iv = values.get("iv", "").encode("utf-8") or key
+    if len(key) not in (16, 24, 32) or len(iv) != 16:
+        _gateway_crypto_failures[base_url] = time.monotonic()
+        return None
+    _gateway_crypto_cache[base_url] = (key, iv)
+    return key, iv
+
+
 def _is_webvpn_proxy_route(base_url: str, response_url: str) -> bool:
     """Confirm that a WEngine response stayed on an encoded external route.
 
@@ -499,10 +538,11 @@ def make_institution_client(
     if entry.access_type == "direct":
         return make_direct_network_client(config), entry
     if entry.access_type == "webvpn":
+        key, iv = gateway_host_crypto(entry.base_url) or (entry.key, entry.iv)
         client = WebVPNClient(
             base_url=entry.base_url,
-            key=entry.key,
-            iv=entry.iv,
+            key=key,
+            iv=iv,
             cookie_file=cookie_override or cookie_file_for(entry, config),
             **common,
         )

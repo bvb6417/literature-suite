@@ -1368,8 +1368,8 @@
       "type": "webvpn",
       "base_url": "https://webvpn.nwu.edu.cn",
       "origin": "catalog",
-      "crypto_key": "wrdvpnisthebest!",
-      "crypto_iv": "wrdvpnisthebest!"
+      "crypto_key": "nwuwyxisthebest!",
+      "crypto_iv": "nwuwyxisthebest!"
     },
     {
       "id": "catalog-e23f1e45b87e",
