@@ -14,6 +14,8 @@ class PreviewApp(SuiteApp):
     def __init__(self):
         super().__init__()
         self.title('文献工作台')
+        from setup_guide import prompt_if_needed
+        self.after(500,lambda:prompt_if_needed(self))
 
     def _configure_style(self):
         self._azure_theme_loaded=False

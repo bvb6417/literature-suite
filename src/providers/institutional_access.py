@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 import requests
+from suite_paths import absolute_path
 
 from .webvpn_hhu import (
     DEFAULT_KEY,
@@ -57,6 +58,19 @@ LOGIN_MARKERS = (
     "/saml/",
 )
 
+AUTO_LOGIN_FIELDS = {
+    "checked",
+    "login_url_contains",
+    "password_tab",
+    "username",
+    "password",
+    "remember_me",
+    "submit",
+    "captcha",
+    "error",
+    "username_settle_seconds",
+}
+
 LOGIN_HTML_MARKERS = (
     "统一身份认证",
     "统一认证",
@@ -87,6 +101,9 @@ class SchoolEntry:
     cookie_file_name: str = ""
     notes: str = ""
     origin: str = "local"
+    # Login-page selectors for automatic form filling (schools.json "auto_login").
+    # Empty for schools whose login page has not been checked.
+    auto_login: dict[str, Any] = field(default_factory=dict, compare=False, hash=False)
 
     @property
     def type_label(self) -> str:
@@ -158,6 +175,12 @@ def _entry_from_mapping(raw: dict[str, Any], *, origin: str) -> SchoolEntry:
     entry_id = str(raw.get("id") or "").strip()
     if not entry_id:
         entry_id = _stable_school_id(name, base_url or gateway)
+    raw_auto_login = raw.get("auto_login")
+    auto_login = {
+        key: value
+        for key, value in (raw_auto_login.items() if isinstance(raw_auto_login, dict) else [])
+        if key in AUTO_LOGIN_FIELDS and isinstance(value, (str, int, float))
+    }
     return SchoolEntry(
         id=entry_id,
         name=name,
@@ -172,6 +195,7 @@ def _entry_from_mapping(raw: dict[str, Any], *, origin: str) -> SchoolEntry:
         cookie_file_name=str(raw.get("cookie_file_name") or "").strip(),
         notes=str(raw.get("notes") or "").strip(),
         origin=origin,
+        auto_login=auto_login,
     )
 
 
@@ -195,6 +219,10 @@ def load_school_catalog(
     local_values = payload.get("schools") or []
     if not isinstance(local_values, list):
         raise InstitutionalConfigError("schools.json 的 schools 必须是数组")
+    from suite_paths import APP_DIR
+    custom = APP_DIR / "state" / "custom_schools.json"
+    if custom.is_file():
+        local_values = local_values + json.loads(custom.read_text("utf-8"))["schools"]
     for index, raw in enumerate(local_values, start=1):
         if not isinstance(raw, dict) or raw.get("enabled") is False:
             continue
@@ -291,14 +319,20 @@ def cookie_file_for(entry: SchoolEntry, config: dict[str, Any]) -> Path:
     settings = config.get("institution") or {}
     explicit = relocate_legacy_path(settings.get("cookie_file") or "")
     if explicit:
-        return Path(os.path.expandvars(explicit)).expanduser()
+        return absolute_path(os.path.expandvars(explicit))
     if entry.name == "河海大学":
         legacy = config.get("webvpn") or {}
         legacy_cookie = relocate_legacy_path(legacy.get("cookie_file") or "")
         if legacy_cookie:
-            return Path(os.path.expandvars(legacy_cookie)).expanduser()
+            return absolute_path(os.path.expandvars(legacy_cookie))
     filename = entry.cookie_file_name or re.sub(r"[^A-Za-z0-9._-]+", "_", entry.id) + ".json"
-    return application_state_dir() / "schools" / filename
+    target = application_state_dir() / "schools" / filename
+    # Older installs saved HHU sessions at the state root. Reuse that file only
+    # when no school-specific session exists; GUI and CLI must choose alike.
+    legacy_default = application_state_dir() / "webvpn_cookies.json"
+    if entry.id == "hhu" and not target.exists() and legacy_default.exists():
+        return legacy_default
+    return target
 
 
 @dataclass
@@ -312,7 +346,7 @@ class RoutedAccessClient:
     connector_url: str = ""
     timeout: float = 30.0
     browser_timeout: float | None = None
-    delay: float = 2.0
+    delay: float = 0.0
     max_bytes: int = 100 * 1024 * 1024
     verify_tls: bool = True
     elsevier_api_key: str | None = None
@@ -388,6 +422,15 @@ class RoutedAccessClient:
     fetch = WebVPNClient.fetch
 
 
+def request_delay_seconds(config: dict[str, Any]) -> float:
+    """Optional minimum interval between institution requests; 0 (none) by default."""
+    value = (config.get("institution") or {}).get("request_delay_seconds")
+    try:
+        return max(0.0, float(value)) if value not in (None, "") else 0.0
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def make_direct_network_client(config: dict[str, Any]) -> RoutedAccessClient:
     """Create a cookie-free client using the machine's current network route."""
     network = config.get("network") or {}
@@ -400,7 +443,7 @@ def make_direct_network_client(config: dict[str, Any]) -> RoutedAccessClient:
         browser_timeout=float(
             download.get("per_paper_timeout_seconds") or 120
         ),
-        delay=float((config.get("institution") or {}).get("request_delay_seconds") or 2),
+        delay=request_delay_seconds(config),
         max_bytes=int(download.get("max_file_mb") or 120) * 1024 * 1024,
         verify_tls=True,
         elsevier_api_key=str(keys.get("elsevier") or "").strip() or None,
@@ -529,7 +572,7 @@ def make_institution_client(
         "browser_timeout": float(
             download.get("per_paper_timeout_seconds") or 120
         ),
-        "delay": float((config.get("institution") or {}).get("request_delay_seconds") or 2),
+        "delay": request_delay_seconds(config),
         "max_bytes": int(download.get("max_file_mb") or 120) * 1024 * 1024,
         "verify_tls": True,
         "elsevier_api_key": str(keys.get("elsevier") or "").strip() or None,
@@ -707,12 +750,14 @@ def login_institution(config: dict[str, Any], timeout: float) -> dict[str, Any]:
         candidate_config.setdefault("institution", {})["cookie_file"] = str(candidate)
         return institution_session_status(candidate_config)
 
+    auto_fill = auto_fill_settings(entry, config)
     try:
         result = login_with_installed_browser(
             base_url=entry.base_url,
             cookie_file=target_cookie_file,
             timeout=timeout,
             validator=validator,
+            auto_fill=auto_fill,
         )
     except BrowserLoginError as exc:
         return {
@@ -720,6 +765,7 @@ def login_institution(config: dict[str, Any], timeout: float) -> dict[str, Any]:
             "error_type": "browser_login_failed",
             "reason": str(exc),
             "method": "installed_browser_cdp",
+            "auto_fill": getattr(exc, "auto_fill", "configured" if auto_fill else "not_configured"),
             "school_id": entry.id,
             "school_name": entry.name,
             "access_type": entry.access_type,
@@ -734,6 +780,113 @@ def login_institution(config: dict[str, Any], timeout: float) -> dict[str, Any]:
         }
     )
     return result
+
+
+def resolve_institution_credentials(
+    config: dict[str, Any], entry: SchoolEntry | None = None,
+) -> tuple[str, str, str]:
+    """Resolve one credential pair for both readiness and actual login.
+
+    Never mix a partial pair with another source or let stale stored credentials
+    silently replace an explicitly configured account.
+    """
+    settings = config.get("institution") or {}
+    override = settings.get("_setup_credentials")
+    if override:
+        return str(override[0]).strip(), str(override[1]), "dialog"
+    username = os.environ.get("LITERATURE_INSTITUTION_USERNAME") or ""
+    password = os.environ.get("LITERATURE_INSTITUTION_PASSWORD") or ""
+    if username or password:
+        return username.strip(), password, "environment"
+    username = str(settings.get("login_username") or "").strip()
+    password = str(settings.get("login_password") or "")
+    if username or password:
+        return username, password, "config"
+    if entry is None:
+        try:
+            entry, _, _ = selected_school(config)
+        except (InstitutionalConfigError, OSError):
+            return "", "", "none"
+    try:
+        import win32cred
+        import pywintypes
+    except ImportError:
+        return "", "", "none"
+    try:
+        cred = win32cred.CredRead("LiteratureWorkbench/" + entry.id, win32cred.CRED_TYPE_GENERIC)
+    except pywintypes.error:
+        return "", "", "none"
+    blob = cred.get("CredentialBlob") or b""
+    try:
+        password = blob.decode("utf-16-le") if isinstance(blob, bytes) else str(blob)
+    except UnicodeDecodeError:
+        return "", "", "none"
+    return str(cred.get("UserName") or "").strip(), password, "windows"
+
+
+def institution_credentials(config: dict[str, Any]) -> tuple[str, str]:
+    username, password, _source = resolve_institution_credentials(config)
+    return username, password
+
+
+def auto_fill_settings(entry: SchoolEntry, config: dict[str, Any]) -> dict[str, Any] | None:
+    """Selectors + account for the login window, or None when either is missing."""
+    selectors = entry.auto_login or {}
+    if not all(str(selectors.get(key) or "").strip() for key in ("username", "password", "submit")):
+        return None
+    username, password, _source = resolve_institution_credentials(config, entry)
+    if not username or not password:
+        return None
+    return {**selectors, "account": username, "secret": password}
+
+
+def ensure_institution_session(
+    config: dict[str, Any],
+    *,
+    allow_login: bool = True,
+    on_event=None,
+) -> dict[str, Any]:
+    """Return the session status; when it has expired, renew it in the login window.
+
+    The persistent browser profile often still holds the school's SSO session,
+    in which case the window finishes by itself.  With ``auto_login`` selectors
+    in schools.json and an account in the config, the form is filled and
+    submitted once.  CAPTCHAs are left to the user.  Never raises.
+    """
+    status = institution_session_status(config)
+    if status.get("valid") or status.get("can_attempt") or not allow_login:
+        return status
+    if status.get("state") not in {"login_required", "missing"} or not status.get("login_supported"):
+        return status
+    settings = config.get("institution") or {}
+    if not bool(settings.get("auto_login", True)):
+        return status
+    try:
+        wait = max(30.0, float(settings.get("auto_login_timeout_seconds") or 180))
+    except (TypeError, ValueError):
+        wait = 180.0
+    try:
+        entry, _catalog_path, _warnings = selected_school(config)
+        filling = auto_fill_settings(entry, config) is not None
+    except (InstitutionalConfigError, OSError):
+        filling = False
+    if on_event:
+        on_event({"state": "start", "timeout": int(wait), "auto_fill": filling,
+                  "message": status.get("message")})
+    try:
+        login = login_institution(config, wait)
+    except Exception as exc:  # keep the batch alive whatever the browser does
+        login = {"ok": False, "reason": f"{type(exc).__name__}: {exc}"}
+    after = institution_session_status(config)
+    after["auto_login"] = {
+        "attempted": True,
+        "ok": bool(after.get("valid")),
+        "auto_fill": login.get("auto_fill", "configured" if filling else "not_configured"),
+        "reason": "" if after.get("valid") else str(login.get("reason") or after.get("message") or ""),
+    }
+    if on_event:
+        on_event({"state": "done", **after["auto_login"], "message": after.get("message")})
+    return after
 
 
 def download_via_institution(
@@ -873,6 +1026,14 @@ def apply_school_selection(
             "schools_file": str(catalog_path.resolve()),
         }
     )
-    settings.pop("cookie_file", None)
+    previous = config.get("institution") or {}
+    same_school = (
+        previous.get("school_id") == entry.id
+        or (not previous.get("school_id") and previous.get("school_name") == entry.name)
+    )
+    if not same_school:
+        settings.pop("cookie_file", None)
+        settings.pop("login_username", None)
+        settings.pop("login_password", None)
     config["institution"] = settings
     return config

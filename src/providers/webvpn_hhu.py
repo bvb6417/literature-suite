@@ -529,7 +529,7 @@ class WebVPNClient:
     cookie_file: Path
     timeout: float = 30.0
     browser_timeout: float | None = None
-    delay: float = 2.0
+    delay: float = 0.0
     max_bytes: int = 100 * 1024 * 1024
     verify_tls: bool = True
     elsevier_api_key: str | None = None
@@ -701,11 +701,25 @@ class WebVPNClient:
                 response.close()
 
 
+WEBVPN_LOGIN_URL_MARKERS = ("/authserver/login", "/cas/login", "/sso/login", "/users/sign_in")
+
+
+class WebVPNSessionExpired(DownloadError):
+    """A WebVPN request was redirected to the institution login page."""
+
+
 class ElsevierWebVPNSession:
-    """Expose WebVPNClient as the requests-like transport used by Elsevier."""
+    """Expose WebVPNClient as the requests-like transport used by Elsevier.
+
+    ``expired`` and ``gateway_errors`` record what the Elsevier cascade cannot
+    see itself (it swallows some request errors), so the caller can retry the
+    paper over the direct route.
+    """
 
     def __init__(self, client: WebVPNClient) -> None:
         self.client = client
+        self.expired = False
+        self.gateway_errors = 0
 
     def get(
         self,
@@ -720,7 +734,22 @@ class ElsevierWebVPNSession:
         # WebVPNClient owns routing, cookies, throttling, TLS and redirect policy.
         # The extra arguments are accepted for requests.Session compatibility.
         del proxies, timeout, allow_redirects
-        return self.client.get(url, stream=stream, headers=headers)
+        try:
+            response = self.client.get(url, stream=stream, headers=headers)
+        except requests.RequestException:
+            self.gateway_errors += 1
+            raise
+        final = urllib.parse.urlsplit(response.url)
+        if any(marker in final.path.casefold() for marker in WEBVPN_LOGIN_URL_MARKERS) or (
+            host_of(response.url) == host_of(self.client.base_url) and final.path.casefold().startswith("/login")
+        ):
+            self.expired = True
+            response.close()
+            raise WebVPNSessionExpired("WebVPN 会话已过期：请求被重定向到学校登录页")
+        if response.status_code >= 400 and not response.headers.get("X-ELS-Status"):
+            # An error page from the gateway itself, not an Elsevier API answer.
+            self.gateway_errors += 1
+        return response
 
 
 def download_elsevier_via_webvpn(
@@ -1218,7 +1247,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--key", default=DEFAULT_KEY, help="WEngine AES key text")
     parser.add_argument("--iv", default=DEFAULT_KEY, help="WEngine AES-CFB IV text")
     parser.add_argument("--timeout", type=float, default=30.0, help="per-request timeout in seconds")
-    parser.add_argument("--delay", type=float, default=2.0, help="minimum delay between requests")
+    parser.add_argument("--delay", type=float, default=0.0, help="minimum delay between requests (0 = none)")
     parser.add_argument("--max-mb", type=int, default=100, help="maximum accepted response size")
     parser.add_argument("--max-steps", type=int, default=12, help="maximum URL attempts per DOI")
     parser.add_argument("--overwrite", action="store_true", help="replace existing output PDFs")

@@ -25,3 +25,16 @@ License. The vendored runtime files are stored under `src/themes/azure/`.
 
 The applicable license text is included at
 `third_party_licenses/MIT-Azure-ttk-theme.txt`.
+
+
+## TkWebUI
+
+The bundled `src/tkwebui/` UI components are distributed under the MIT License.
+See `third_party_licenses/tkwebui-LICENSE.txt`.
+
+## Windows standalone distribution
+
+The standalone build includes Python and runtime dependencies. Distribution
+metadata and license texts are included in the Windows release under
+`runtime-licenses/`; PyInstaller supplies its bootloader with its distribution
+exception. No institutional credentials or browser session data are bundled.

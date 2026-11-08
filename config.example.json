@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "contact_email": "you@example.edu",
+  "contact_email": "",
   "api_keys": {
     "elsevier": "",
     "elsevier_inst_token": "",
@@ -17,7 +17,8 @@
   "elsevier": {
     "use_aam": false,
     "use_xml_reconstruction": false,
-    "figure_download_workers": 4
+    "figure_download_workers": 4,
+    "route": "auto"
   },
   "download": {
     "source_order": [
@@ -34,15 +35,19 @@
     "base_url": "",
     "key": "",
     "iv": "",
-    "request_delay_seconds": 2
+    "request_delay_seconds": 0
   },
   "institution": {
     "school_id": "campus-network-direct",
     "school_name": "校园网直连",
     "access_type": "direct",
     "schools_file": "schools.json",
-    "request_delay_seconds": 2,
-    "connector_url": ""
+    "request_delay_seconds": 0,
+    "connector_url": "",
+    "auto_login": true,
+    "auto_login_timeout_seconds": 180,
+    "login_username": "",
+    "login_password": ""
   },
   "paths": {
     "pdf_dir": "downloads"

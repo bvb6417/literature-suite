@@ -822,7 +822,19 @@
       "crypto_key": "wrdvpnisthebest!",
       "crypto_iv": "wrdvpnisthebest!",
       "cookie_file_name": "webvpn_cookies.json",
-      "notes": "内置兼容配置；账号、密码和 Cookie 不保存在本文件中。"
+      "notes": "内置兼容配置；账号、密码和 Cookie 不保存在本文件中。",
+      "auto_login": {
+        "checked": "2026-10-29 按统一身份认证（authserver）登录页源码核对",
+        "login_url_contains": "/authserver/login",
+        "password_tab": "#userNameLogin_a",
+        "username": ".login-main .m-account #username",
+        "password": ".login-main .m-account #password",
+        "remember_me": "",
+        "submit": ".login-main #login_submit",
+        "captcha": ".login-main #captchaDiv, #sliderCaptchaDiv",
+        "error": ".login-main #showErrorTip, .login-main #nameErrorTip, .login-main #pwdErrorTip",
+        "username_settle_seconds": 2
+      }
     },
     {
       "id": "catalog-70724b3915cd",
@@ -1450,7 +1462,19 @@
       "type": "webvpn",
       "base_url": "https://webvpn.example.edu.cn",
       "crypto_key": "wrdvpnisthebest!",
-      "crypto_iv": "wrdvpnisthebest!"
+      "crypto_iv": "wrdvpnisthebest!",
+      "auto_login": {
+        "checked": "",
+        "login_url_contains": "",
+        "password_tab": "",
+        "username": "",
+        "password": "",
+        "remember_me": "",
+        "submit": "",
+        "captcha": "",
+        "error": "",
+        "username_settle_seconds": 0
+      }
     },
     "ezproxy": {
       "id": "my-ezproxy",

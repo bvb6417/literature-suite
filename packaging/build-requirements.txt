@@ -1,0 +1,17 @@
+# Resolved environment used for the Windows x64 release; Python 3.11.5
+altgraph==0.17.5
+certifi==2026.10.23
+charset-normalizer==3.5.2
+idna==3.20
+packaging==26.3
+pefile==2024.8.26
+pycryptodome==4.4.0
+pyinstaller==6.21.0
+pyinstaller-hooks-contrib==2026.9
+pypdf==7.0.0
+pywin32==312
+pywin32-ctypes==0.2.3
+requests==2.34.2
+setuptools==84.2.1
+urllib3==2.8.0
+websocket-client==1.9.2

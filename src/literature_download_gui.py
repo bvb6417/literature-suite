@@ -275,6 +275,8 @@ class ToolTip:
             self._window = None
 
 
+ADD_SCHOOL = '＋ 新增学校'
+
 class DownloadApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
@@ -439,7 +441,7 @@ class DownloadApp(tk.Tk):
         self.max_retries.set(str(network.get("max_retries", 2)))
         self.retry_delay_seconds.set(str(network.get("retry_delay_seconds", 2)))
         self.per_paper_timeout_seconds.set(str(download.get("per_paper_timeout_seconds", 120)))
-        self.institution_delay_seconds.set(str(institution.get("request_delay_seconds", 2)))
+        self.institution_delay_seconds.set(str(institution.get("request_delay_seconds", 0)))
         self.elsevier_use_aam.set(bool(elsevier.get("use_aam", False)))
         self.elsevier_use_xml_rebuild.set(
             bool(elsevier.get("use_xml_reconstruction", False))
@@ -1084,31 +1086,6 @@ class DownloadApp(tk.Tk):
             foreground="#64748B",
         ).grid(row=0, column=0, columnspan=2, sticky="w")
 
-        source_actions = ttk.Frame(access, style="Surface.TFrame")
-        source_actions.grid(
-            row=0,
-            column=2,
-            rowspan=2,
-            padx=(14, 0),
-            sticky="ne",
-        )
-        source_actions.columnconfigure(0, weight=1, uniform="source_action")
-        source_actions.columnconfigure(1, weight=1, uniform="source_action")
-        self.check_sources_button = ttk.Button(
-            source_actions,
-            text="检查来源",
-            width=14,
-            command=self.check_sources,
-        )
-        self.check_sources_button.grid(row=0, column=0, padx=(0, 6), sticky="ew")
-        self.login_button = ttk.Button(
-            source_actions,
-            text="刷新机构登录",
-            width=14,
-            command=self.login_webvpn,
-        )
-        self.login_button.grid(row=0, column=1, padx=(6, 0), sticky="ew")
-
         ttk.Label(access, text="机构接入", style="Card.TLabel").grid(
             row=1, column=0, pady=(12, 0), sticky="nw"
         )
@@ -1119,9 +1096,14 @@ class DownloadApp(tk.Tk):
             school_bar,
             textvariable=self.school_query,
             state="normal",
-            values=(),
+            values=(ADD_SCHOOL,),
         )
         self.school_combo.grid(row=0, column=0, sticky="ew")
+        self.login_button = ttk.Button(school_bar, text="刷新机构登录", command=self.login_webvpn)
+        self.login_button.grid(row=0, column=1, padx=(8, 0))
+        ttk.Button(school_bar, text="打开学校库", command=self.open_schools_file).grid(
+            row=0, column=2, padx=(8, 0)
+        )
         self.school_combo.bind("<KeyRelease>", self._filter_school_dropdown)
         self.school_combo.bind(
             "<<ComboboxSelected>>", self._select_school_from_combo
@@ -1134,35 +1116,9 @@ class DownloadApp(tk.Tk):
         ).grid(row=1, column=0, pady=(3, 0), sticky="w")
         self._school_tooltip = ToolTip(
             self.school_combo,
-            "置顶的“校园网直连”无需选择学校或登录；适合已在校园网内的电脑。\n"
+            "选择“＋ 新增学校”可添加未收录的学校。“校园网直连”无需选择学校或登录；适合已在校园网内的电脑。\n"
             "也可输入学校名、省份或接入类型搜索其他适配器。",
         )
-        self.refresh_schools_button = ttk.Button(
-            source_actions,
-            text="刷新配置库",
-            width=14,
-            command=self.load_schools,
-        )
-        self.refresh_schools_button.grid(
-            row=1,
-            column=0,
-            padx=(0, 6),
-            pady=(8, 0),
-            sticky="ew",
-        )
-        ttk.Button(
-            source_actions,
-            text="打开学校库",
-            width=14,
-            command=self.open_schools_file,
-        ).grid(
-            row=1,
-            column=1,
-            padx=(6, 0),
-            pady=(8, 0),
-            sticky="ew",
-        )
-
         credentials = SectionCard(tab, text="API 与联系信息", padding=14)
         credentials.grid(row=1, column=0, pady=(12, 0), sticky="ew")
         credentials.columnconfigure(1, weight=1)
@@ -1381,9 +1337,7 @@ class DownloadApp(tk.Tk):
         state = "normal" if enabled else "disabled"
         for widget_name in (
             "save_config_button",
-            "check_sources_button",
             "login_button",
-            "refresh_schools_button",
             "elsevier_key_entry",
             "openalex_key_entry",
             "crossref_email_entry",
@@ -1513,6 +1467,8 @@ class DownloadApp(tk.Tk):
                         self._events.put(("download_challenge", payload))
                     elif event_name == "result_update":
                         self._events.put(("download_result_update", payload))
+                    elif event_name == "institution_login":
+                        self._events.put(("download_institution_login", payload))
                     elif event_name == "complete":
                         saw_terminal = True
                         if not self._stop_requested:
@@ -1591,6 +1547,8 @@ class DownloadApp(tk.Tk):
                     self._handle_download_challenge(payload)
                 elif kind == "download_result_update":
                     self._handle_download_result_update(payload)
+                elif kind == "download_institution_login":
+                    self._handle_institution_login(payload)
                 elif kind == "download_complete":
                     self._finish_worker()
                     self._handle_download_complete(payload)
@@ -1630,7 +1588,7 @@ class DownloadApp(tk.Tk):
             if item.get("name")
         }
         displays = list(self._school_by_display)
-        self.school_combo.configure(values=displays)
+        self.school_combo.configure(values=[ADD_SCHOOL,*displays])
         catalog_value = payload.get("catalog_path")
         if catalog_value:
             self._school_catalog_path = Path(str(catalog_value))
@@ -1692,13 +1650,22 @@ class DownloadApp(tk.Tk):
                 or query in str(entry.get("base_url") or "").casefold()
                 or query in str(entry.get("gateway") or "").casefold()
             ]
-        self.school_combo.configure(values=matches)
+        self.school_combo.configure(values=[ADD_SCHOOL,*matches])
         if event.keysym == "Return" and matches:
             self.school_query.set(matches[0])
             self._select_school_from_combo()
 
     def _select_school_from_combo(self, _event: tk.Event[Any] | None = None) -> None:
         value = self.school_query.get().strip()
+        if value == ADD_SCHOOL:
+            from setup_guide import show_school
+            cfg_path=self._config_file_path()
+            cfg=json.loads(cfg_path.read_text("utf-8")) if cfg_path.exists() else {}
+            current=(cfg.get("institution") or {}).get("school_id")
+            previous=next((label for label,row in self._school_by_display.items() if row.get("id")==current),"")
+            self.school_query.set(previous)
+            show_school(self)
+            return
         entry = self._school_by_display.get(value)
         if entry is None:
             matches = [
@@ -1708,7 +1675,7 @@ class DownloadApp(tk.Tk):
             ]
             if not matches:
                 self.school_detail_text.set(
-                    "未找到该学校；可修改 schools.json 后刷新配置库"
+                    "未找到该学校，请选择下拉框首项“＋ 新增学校”。"
                 )
                 return
             entry = matches[0]
@@ -1808,6 +1775,13 @@ class DownloadApp(tk.Tk):
                 self.login_webvpn()
 
     def login_webvpn(self) -> None:
+        from setup_guide import show_school, read
+        from providers import institutional_access as access
+        cfg=read(self._config_file_path(),{})
+        entry,_,_=access.selected_school(cfg)
+        if entry.auto_login:
+            show_school(self,entry)
+            return
         self.status_text.set("正在启动所选学校的机构登录适配器……")
         self._start_worker(
             "login",
@@ -2057,6 +2031,16 @@ class DownloadApp(tk.Tk):
             "请在失败条目右键复制链接"
         )
         self.progress_text.set("等待手动处理")
+
+    def _handle_institution_login(self, payload: dict[str, Any]) -> None:
+        if payload.get("state") == "start":
+            how = "正在自动填写账号密码" if payload.get("auto_fill") else "请在弹出的浏览器窗口中登录"
+            self.status_text.set(f"学校 WebVPN 会话已过期，{how}（最多等待 {payload.get('timeout') or 180} 秒）")
+        elif payload.get("ok"):
+            self.status_text.set("学校 WebVPN 会话已续期，继续下载")
+        else:
+            reason = str(payload.get("reason") or "")[:80]
+            self.status_text.set(f"WebVPN 续期未完成，Elsevier 改走直连 API：{reason}")
 
     def _handle_download_result_update(self, payload: dict[str, Any]) -> None:
         result = payload.get("result") or {}

@@ -48,7 +48,9 @@ from providers.institutional_access import (
     apply_school_selection,
     cookie_file_for,
     download_via_institution,
+    ensure_institution_session,
     find_school,
+    resolve_institution_credentials,
     institution_session_status,
     load_school_catalog,
     login_institution,
@@ -60,12 +62,13 @@ from providers.webvpn_hhu import (
     DEFAULT_BASE_URL,
     DEFAULT_KEY,
     DownloadError,
+    ElsevierWebVPNSession,
+    WebVPNSessionExpired,
     doi_filename,
     normalize_doi,
     is_sitewide_pdf,
     valid_pdf,
 )
-from providers.webvpn_login_cdp import DEFAULT_COOKIE_FILE
 
 
 APP_VERSION = "1.8.0"
@@ -141,6 +144,8 @@ def default_config() -> dict[str, Any]:
             "use_aam": False,
             "use_xml_reconstruction": False,
             "figure_download_workers": 4,
+            # auto: WebVPN session valid -> Elsevier API via WebVPN, else direct.
+            "route": "auto",
         },
         "download": {
             "source_order": list(SOURCE_ORDER),
@@ -153,16 +158,24 @@ def default_config() -> dict[str, Any]:
             "base_url": DEFAULT_BASE_URL,
             "key": DEFAULT_KEY,
             "iv": DEFAULT_KEY,
-            "cookie_file": str(DEFAULT_COOKIE_FILE),
-            "request_delay_seconds": 2,
+            # Let the shared resolver choose the school session. Injecting a
+            # legacy HHU path here made CLI ignore sessions saved by the GUI.
+            "cookie_file": "",
+            "request_delay_seconds": 0,
         },
         "institution": {
             "school_id": "campus-network-direct",
             "school_name": "校园网直连",
             "access_type": "direct",
             "schools_file": str(DEFAULT_SCHOOLS_PATH),
-            "request_delay_seconds": 2,
+            "request_delay_seconds": 0,
             "connector_url": "",
+            # Renew an expired WebVPN session in the login window during a batch.
+            "auto_login": True,
+            "auto_login_timeout_seconds": 180,
+            # Filled into the login form when schools.json has auto_login selectors.
+            "login_username": "",
+            "login_password": "",
         },
     }
 
@@ -192,7 +205,7 @@ def atomic_write(path: Path, content: bytes) -> None:
 
 _SECRET_FIELD = re.compile(
     r"^(?:api[_-]?keys?|.*[_-]api[_-]?key|token|.*[_-]token|cookies?|"
-    r"cookie[_-]header|password|secret|authorization|contact[_-]?email|"
+    r"cookie[_-]header|password|.*[_-]password|secret|authorization|contact[_-]?email|"
     r"email|mailto)$",
     re.I,
 )
@@ -1438,11 +1451,12 @@ def download_elsevier(
         1, min(8, int(elsevier_options.get("figure_download_workers") or 4))
     )
     proxy = dict(elsevier_fulltext.DEFAULT_PROXY)
-    http = elsevier_fulltext.session(proxy)
     chromium = find_chromium()
     started = time.monotonic()
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with temporary_folder("elsevier-fulltext-") as temporary:
+
+    def attempt(http: Any, workdir: Path) -> dict[str, Any]:
+        """One pass of the Elsevier cascade over ``http`` (direct or WebVPN)."""
         try:
             result = elsevier_fulltext.test_doi(
                 http,
@@ -1451,7 +1465,7 @@ def download_elsevier(
                 inst_token,
                 proxy,
                 timeout,
-                Path(temporary),
+                workdir,
                 True,
                 chromium,
                 use_aam=use_aam,
@@ -1588,6 +1602,79 @@ def download_elsevier(
             ],
         }
 
+
+    notes: list[dict[str, Any]] = []
+    expired = False
+    with temporary_folder("elsevier-fulltext-") as temporary:
+        if elsevier_route(config) == "webvpn":
+            client = None
+            try:
+                client, _entry = make_institution_client(config)
+                client.delay = 0.0  # Elsevier API over WebVPN: no fixed request interval
+                transport = ElsevierWebVPNSession(client)
+                workdir = Path(temporary) / "webvpn"
+                workdir.mkdir()
+                outcome = attempt(transport, workdir)
+                if transport.expired:
+                    expired = True
+                    notes.append({"phase": phase, "route": "webvpn",
+                                  "detail": "WebVPN 会话已过期，本篇改走直连 API"})
+                    LOG.warning("[%s] WebVPN 会话已过期，Elsevier API 改走直连", doi)
+                elif outcome.get("ok") or not transport.gateway_errors:
+                    # Entitlement is the same on both routes, so a genuine
+                    # Elsevier refusal is not retried over the slower direct link.
+                    return _with_route(outcome, "webvpn", notes, expired)
+                else:
+                    notes.append({"phase": phase, "route": "webvpn",
+                                  "detail": f"WebVPN 网关有 {transport.gateway_errors} 次请求失败，本篇改走直连 API",
+                                  "reason": outcome.get("reason")})
+            except (DownloadError, InstitutionalConfigError, OSError, ValueError, requests.RequestException) as exc:
+                notes.append({"phase": phase, "route": "webvpn",
+                              "detail": f"WebVPN 不可用，本篇改走直连 API：{type(exc).__name__}: {exc}"})
+            finally:
+                if client is not None:
+                    client.session.close()
+        workdir = Path(temporary) / "direct"
+        workdir.mkdir()
+        return _with_route(attempt(elsevier_fulltext.session(proxy), workdir), "direct", notes, expired)
+
+
+def elsevier_route(config: dict[str, Any]) -> str:
+    """Route for Elsevier API requests: "webvpn" or "direct".
+
+    ``elsevier.route`` = auto (default) uses WebVPN while the session is valid;
+    "direct" never does.  A batch decides once per paper and passes the result
+    to its worker through LITERATURE_ELSEVIER_ROUTE.
+    """
+    forced = os.environ.get("LITERATURE_ELSEVIER_ROUTE", "").strip().casefold()
+    if forced in {"webvpn", "direct"}:
+        return forced
+    mode = str((config.get("elsevier") or {}).get("route") or "auto").strip().casefold()
+    if mode == "direct":
+        return "direct"
+    try:
+        if selected_school(config)[0].access_type != "webvpn":
+            return "direct"
+    except (InstitutionalConfigError, OSError):
+        return "direct"
+    status = (config.get("_runtime") or {}).get("institution_status")
+    if not isinstance(status, dict):
+        status = institution_session_status(config)
+    return "webvpn" if status.get("valid") else "direct"
+
+
+def _with_route(
+    outcome: dict[str, Any],
+    route: str,
+    notes: list[dict[str, Any]],
+    expired: bool,
+) -> dict[str, Any]:
+    outcome["route"] = route
+    if expired:
+        outcome["webvpn_expired"] = True
+    if notes:
+        outcome["attempts"] = [*notes, *(outcome.get("attempts") or [])]
+    return outcome
 
 def make_webvpn_client(config: dict[str, Any]) -> Any:
     """Compatibility wrapper around the selected institution adapter."""
@@ -1842,21 +1929,13 @@ def cached_record(
     """Resolve local full text before any session check, worker or network call."""
     if overwrite:
         return None
-    from suite_settings import pdf_directory
-
     output_path = output_path_for(doi, output_dir, output_format)
-    roots = list(dict.fromkeys((output_dir.resolve(), pdf_directory(config),
-                               (APP_DIR / "downloads").resolve())))
     def candidates():
         yield output_path
-        for root in roots:
-            yield root / output_path.name
-        # Only walk batch subdirectories if the direct paths did not match.
-        filename = output_path.name.casefold()
-        for root in roots:
-            if root.is_dir():
-                yield from (path for path in root.rglob("*")
-                            if path.name.casefold() == filename and path.is_file())
+        if output_dir.is_dir():
+            for path in output_dir.rglob("*"):
+                if path.name.casefold() == output_path.name.casefold() and path.is_file():
+                    yield path
     seen: set[Path] = set()
     for path in candidates():
         resolved = path.resolve()
@@ -2130,17 +2209,8 @@ def _last_worker_stage(stdout: str) -> tuple[str, str]:
 
 
 def _communicate_with_human_wait(process, timeout_seconds):
-    try:
-        return process.communicate(timeout=max(0.1, float(timeout_seconds)))
-    except subprocess.TimeoutExpired as exc:
-        partial = exc.output or ""
-        if isinstance(partial, bytes):
-            partial = partial.decode("utf-8", errors="replace")
-        _source, stage = _last_worker_stage(partial)
-        if stage != "campus_human_verification":
-            raise
-        # One bounded allowance for user verification, not another download retry.
-        return process.communicate(timeout=180)
+    """Human verification shares the single paper's wall-clock budget."""
+    return process.communicate(timeout=max(0.1, float(timeout_seconds)))
 
 
 def download_record_with_timeout(
@@ -2200,6 +2270,7 @@ def download_record_with_timeout(
             "openalex_landing_pages": "开放仓储或出版商页面",
             "institution_download": "机构 PDF 下载（含浏览器）",
             "campus_direct_download": "校园网直连 PDF 下载",
+            "campus_human_verification": "校园网浏览器人工验证",
             "source_complete": "来源收尾",
         }
         stage_text = stage_labels.get(stage, stage or "未知阶段")
@@ -2223,22 +2294,7 @@ def download_record_with_timeout(
             "last_stage": stage,
             "attempts": [],
         }
-        # A killed worker cannot run its in-process fallback. Give direct access
-        # a separate bounded attempt, unless it was already the timed-out stage.
-        if (not force_campus_direct and output_format == "pdf" and "webvpn" in sources
-                and stage != "campus_direct_download"):
-            config = load_config(config_path)
-            entry, _, _ = selected_school(config)
-            if entry.access_type == "webvpn":
-                LOG.warning("[%s] 下载进程超时，切换校园网直连重试", doi)
-                direct = download_record_with_timeout(
-                    doi, output_dir, config_path, ["webvpn"], overwrite=overwrite,
-                    output_format=output_format, timeout_seconds=timeout_seconds,
-                    force_campus_direct=True,
-                )
-                direct["webvpn_failure"] = failure
-                direct["fallback_from"] = "webvpn"
-                return direct
+        # The paper budget is exhausted; do not restart it for another route.
         return failure
     for line in reversed(stdout.splitlines()):
         try:
@@ -2307,6 +2363,22 @@ def run_webvpn_login(config: dict[str, Any], timeout: float) -> dict[str, Any]:
 def redacted_readiness(config_path: Path, config: dict[str, Any]) -> dict[str, Any]:
     keys = config.get("api_keys") or {}
     institution = institution_session_status(config)
+    settings = config.get("institution") or {}
+    try:
+        entry = selected_school(config)[0]
+        selectors = all(str(entry.auto_login.get(key) or "").strip()
+                        for key in ("username", "password", "submit"))
+    except (InstitutionalConfigError, OSError):
+        selectors = False
+    account, secret, credential_source = resolve_institution_credentials(config)
+    institution["auto_login"] = {
+        "enabled": bool(settings.get("auto_login", True)),
+        "form_selectors": selectors,          # schools.json auto_login for this school
+        "account_configured": bool(account and secret),
+        "credential_source": credential_source,
+        "fills_form": selectors and bool(account and secret),
+    }
+    elsevier_mode = str((config.get("elsevier") or {}).get("route") or "auto")
     return {
         "config_path": str(config_path.resolve()),
         "config_exists": config_path.exists(),
@@ -2326,6 +2398,14 @@ def redacted_readiness(config_path: Path, config: dict[str, Any]) -> dict[str, A
                     str(keys.get("elsevier_inst_token") or "").strip()
                 ),
                 "note": "PDF → AAM-PDF → XML 重建",
+                "route_setting": elsevier_mode,
+                "route_now": (
+                    "webvpn"
+                    if elsevier_mode.casefold() != "direct"
+                    and institution.get("access_type") == "webvpn"
+                    and institution.get("valid")
+                    else "direct"
+                ),
             },
             "institution": institution,
             # Kept for older callers that still read providers.webvpn.
@@ -2426,6 +2506,16 @@ def run_check(args: argparse.Namespace) -> int:
     return 0 if payload["ok"] else 2
 
 
+def _reports_expired_institution_session(result: dict[str, Any]) -> bool:
+    """True when a worker hit an expired WebVPN session (Elsevier or institution route)."""
+    if result.get("webvpn_expired") or result.get("error_type") == "session_expired":
+        return True
+    text = json.dumps(result.get("attempts") or [], ensure_ascii=False, default=str)
+    return any(marker in text for marker in (
+        '"webvpn_expired": true', '"session_expired"', "WebVPN login expired", "WebVPN 会话已过期",
+    ))
+
+
 def run_download(args: argparse.Namespace) -> int:
     batch_started = time.monotonic()
     json_lines = bool(getattr(args, "json_lines", False))
@@ -2480,6 +2570,47 @@ def run_download(args: argparse.Namespace) -> int:
         )
     results: list[dict[str, Any]] = []
     record_started_by_doi: dict[str, float] = {}
+    institution: dict[str, Any] = {"status": None, "login_failed": False}
+
+    def report_login(event: dict[str, Any]) -> None:
+        if event.get("state") == "start":
+            LOG.warning(
+                "学校机构会话已过期，正在打开登录窗口续期%s（最多等待 %s 秒）",
+                "，将自动填写账号密码" if event.get("auto_fill") else "",
+                event.get("timeout"),
+            )
+        elif event.get("ok"):
+            LOG.info("学校机构会话已续期")
+        else:
+            LOG.warning("学校机构会话续期未完成：%s", event.get("reason"))
+        if json_lines:
+            emit_event({"event": "institution_login", **event})
+
+    def institution_ready(force: bool = False) -> dict[str, Any]:
+        """Session status for this batch; renews an expired session once."""
+        if institution["status"] is None or force:
+            status = ensure_institution_session(
+                config, allow_login=not institution["login_failed"], on_event=report_login
+            )
+            if (status.get("auto_login") or {}).get("attempted") and not status.get("valid"):
+                # The user could not log in: stop prompting for this batch.
+                institution["login_failed"] = True
+            institution["status"] = status
+            preflight["webvpn"] = status
+            config.setdefault("_runtime", {})["institution_status"] = status
+        return institution["status"]
+
+    def elsevier_batch_route() -> str:
+        mode = str((config.get("elsevier") or {}).get("route") or "auto").strip().casefold()
+        if mode == "direct":
+            return "direct"
+        try:
+            if selected_school(config)[0].access_type != "webvpn":
+                return "direct"
+        except (InstitutionalConfigError, OSError):
+            return "direct"
+        return "webvpn" if institution_ready().get("valid") else "direct"
+
     for index, doi in enumerate(dois, start=1):
         record_started = time.monotonic()
         record_started_by_doi[doi] = record_started
@@ -2500,18 +2631,15 @@ def run_download(args: argparse.Namespace) -> int:
                                    overwrite=args.overwrite, output_format=args.format)
             if result is None:
                 if "webvpn" in sources and "webvpn" not in preflight:
-                    preflight["webvpn"] = webvpn_session_status(config)
-                    config.setdefault("_runtime", {})["institution_status"] = preflight[
-                        "webvpn"
-                    ]
-                    if (
-                        not preflight["webvpn"].get("valid")
-                        and not preflight["webvpn"].get("can_attempt")
-                    ):
+                    status = institution_ready()
+                    if not status.get("valid") and not status.get("can_attempt"):
                         LOG.warning(
                             "学校机构会话不可用：%s；将先尝试其他来源。需要时运行 login 命令刷新。",
-                            preflight["webvpn"].get("message"),
+                            status.get("message"),
                         )
+                if doi.casefold().startswith("10.1016/") and "elsevier" in sources:
+                    # Inherited by the worker process (see elsevier_route).
+                    os.environ["LITERATURE_ELSEVIER_ROUTE"] = elsevier_batch_route()
                 result = download_record_with_timeout(
                     doi,
                     output_dir,
@@ -2521,6 +2649,8 @@ def run_download(args: argparse.Namespace) -> int:
                     output_format=args.format,
                     timeout_seconds=paper_timeout_seconds,
                 )
+                if _reports_expired_institution_session(result):
+                    institution_ready(force=True)
         except Exception as exc:
             result = {
                 "ok": False,
@@ -2797,6 +2927,8 @@ def compact_progress_result(result: dict[str, Any]) -> dict[str, Any]:
         "manual_download_url",
         "last_source",
         "last_stage",
+        "route",
+        "webvpn_expired",
     )
     return {field: result[field] for field in fields if field in result}
 

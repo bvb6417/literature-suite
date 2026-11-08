@@ -12,7 +12,8 @@ from switch_lite import icon, Tooltip, PALETTE
 
 
 class WindowChrome:
-    def __init__(self,root,toolbar,drag_widgets=(),on_close=None,sidebar=None):
+    def __init__(self,root,toolbar,drag_widgets=(),on_close=None,sidebar=None,*,dialog=False):
+        self.dialog=dialog
         self.root=root
         root._window_chrome=self
         self.close_action=on_close or getattr(root,'close',root.destroy)
@@ -72,6 +73,7 @@ class WindowChrome:
         self.icon_size=round(root.winfo_fpixels('1i')/96*14)
         for key,command,label in [('pin',self.toggle_pin,'窗口置顶'),('minimize',self.minimize,'最小化'),
                                   ('maximize',self.toggle_maximize,'最大化 / 还原'),('close',self.close,'关闭')]:
+            if dialog and key!="close":continue
             button=ttk.Button(self.controls,image=icon(root,key,self.icon_size),
                               style='Close.TButton' if key=='close' else 'Quiet.TButton',
                               command=command,takefocus=False,padding=(12,9))
@@ -80,12 +82,12 @@ class WindowChrome:
             button.bind('<Enter>',lambda event,k=key:self.paint_control(k,True),add='+')
             button.bind('<Leave>',lambda event,k=key:self.paint_control(k,False),add='+')
             Tooltip(button,(lambda:'取消置顶' if self.pinned else '窗口置顶') if key=='pin' else label)
-        self.max_button=self.buttons['maximize']
+        self.max_button=self.buttons.get('maximize')
         for widget in self.drag_widgets:
             widget.bind('<ButtonPress-1>',self.drag,add='+')
             widget.bind('<B1-Motion>',self.drag_motion,add='+')
             widget.bind('<ButtonRelease-1>',self.end_drag,add='+')
-            widget.bind('<Double-Button-1>',self.double_click,add='+')
+            if not dialog:widget.bind('<Double-Button-1>',self.double_click,add='+')
         root.bind('<Escape>',self.cancel_drag,add='+')
         root.bind('<Configure>',self.schedule_cache,add='+')
         root.bind('<Map>',self.schedule_cache,add='+')
@@ -111,14 +113,15 @@ class WindowChrome:
         # Keep standard window capabilities for native Snap/animations. The
         # caption is hidden by WM_NCCALCSIZE, not by stripping capability flags.
         style=self.original_style|0x00C00000|0x00040000|0x00080000|0x00020000|0x00010000
+        if self.dialog:style=self.original_style & ~(0x00040000|0x00020000|0x00010000)
         self.set_long(self.hwnd,-16,self.c.c_void_p(style))
-        self.set_long(self.hwnd,-20,self.c.c_void_p((self.original_exstyle|0x00040000)&~0x00000080))
+        if not self.dialog:self.set_long(self.hwnd,-20,self.c.c_void_p((self.original_exstyle|0x00040000)&~0x00000080))
         margins=(self.c.c_int*4)(1,1,1,1)
         self.dwm.DwmExtendFrameIntoClientArea(self.hwnd,self.c.byref(margins))
         corner=self.c.c_int(2)
         self.dwm.DwmSetWindowAttribute(self.hwnd,33,self.c.byref(corner),self.c.sizeof(corner))
         self.u.SetWindowPos(self.hwnd,None,0,0,0,0,0x0001|0x0002|0x0004|0x0010|0x0020)
-        self.install_resize_handles()
+        if not self.dialog:self.install_resize_handles()
         self.schedule_cache()
 
     def install_resize_handles(self):
@@ -215,7 +218,7 @@ class WindowChrome:
                 edge=getattr(self,'resize_margin',7)
                 left=x<rect.left+edge;right=x>=rect.right-edge
                 top=y<rect.top+edge;bottom=y>=rect.bottom-edge
-                if not self.u.IsZoomed(hwnd):
+                if not self.dialog and not self.u.IsZoomed(hwnd):
                     if top and left:return 13
                     if top and right:return 14
                     if bottom and left:return 16
@@ -248,7 +251,7 @@ class WindowChrome:
         self._excluded=[rect(widget) for widget in self.toolbar.winfo_children()
                         if widget not in self.drag_widgets and widget.winfo_ismapped()]
         self._excluded.extend(rect(widget) for widget in self.extra_exclusions if widget.winfo_exists() and widget.winfo_ismapped())
-        self.paint_control('maximize',False)
+        if not self.dialog:self.paint_control('maximize',False)
 
     def paint_control(self,key,hover=False):
         pinned=key=='pin' and self.pinned

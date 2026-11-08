@@ -16,7 +16,7 @@ Set `SUITE` to the installed entry file, for example `D:/tools/literature-suite/
 | Exact DOI lookup | `python SUITE doi <DOI>` |
 | One-hop expansion from seeds | `python SUITE expand <DOI or title> [...] --direction both\|references\|citations --limit 30` |
 | Complete metadata | `python SUITE enrich <DOI> [...] -o refs.ris` or `--input records.json` |
-| Download full text | `python SUITE download <DOI> [...] --json-lines` |
+| Download full text | `python SUITE download <DOI> [...] --output-dir "<安装目录>/downloads" --json-lines` |
 | Check configured channels | `python SUITE check` |
 
 - `-o` accepts `.json`, `.csv` or `.ris`; stdout always carries the JSON result.
@@ -36,3 +36,5 @@ Set `SUITE` to the installed entry file, for example `D:/tools/literature-suite/
 - Only open-access copies, official publisher APIs and the user's own institutional subscription are used. Never suggest Sci-Hub, mirrors or shared accounts.
 - If a result asks for institutional login or human verification, stop and ask the user to finish it in the GUI (全局配置 → 刷新机构登录). Never enter credentials.
 - Keep batches modest; do not loop retries against publisher servers.
+
+首次使用、机构授权、缓存命中与人机验证处理见安装目录下的 AGENTS.md。下载时默认保留缓存，读取返回结果中的 source 和 path。

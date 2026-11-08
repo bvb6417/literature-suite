@@ -1,6 +1,6 @@
 """Workbench-only names/layout adapters; generic components live in switch_lite_* modules."""
 from tkinter import ttk
-from switch_lite import PALETTE, apply_theme
+from tkwebui import PALETTE, apply_theme
 from switch_lite_widgets import (SectionCard, ResponsiveTable, initial_window_bounds,
     align_tree_scrollbar, auto_hide_text_scrollbar)
 

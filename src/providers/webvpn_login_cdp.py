@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-"""Manual WebVPN login using an installed Chrome/Edge and local CDP.
+"""WebVPN login using an installed Chrome/Edge and local CDP.
 
-The browser is only used for the interactive institutional login. Once the
-cookies are captured and validated, all article downloads remain HTTP-only.
+The browser is only used for the institutional login. Once the cookies are
+captured and validated, all article downloads remain HTTP-only. When the school
+profile has ``auto_login`` selectors and the user configured an account, the
+login form is filled and submitted once; CAPTCHAs are always left to the user.
 """
 
 from __future__ import annotations
 
 import json
 import hashlib
+import logging
 import os
 import socket
 import subprocess
@@ -443,6 +446,102 @@ def atomic_cookie_write(path: Path, cookies: list[dict[str, Any]]) -> None:
         temporary.unlink(missing_ok=True)
 
 
+LOG = logging.getLogger(__name__)
+
+# Runs in the login page. Selectors come from schools.json; the account and
+# password arrive as call arguments, never as part of the script text.
+AUTO_FILL_FUNCTION = r"""
+async function (cfg, account, secret) {
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const one = (selector) => (selector ? document.querySelector(selector) : null);
+  const all = (selector) => (selector ? Array.from(document.querySelectorAll(selector)) : []);
+  const visible = (el) => !!el && !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+  const captchaShown = () => all(cfg.captcha).some((el) => visible(el) && el.innerHTML.trim() !== "");
+  const fill = (el, value) => {
+    el.removeAttribute("readonly");
+    el.focus();
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(el, value);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  if (document.readyState !== "complete") return { state: "loading" };
+  let user = one(cfg.username);
+  if (!visible(user) && cfg.password_tab) {
+    const tab = one(cfg.password_tab);
+    if (tab) { tab.click(); await sleep(800); }
+    user = one(cfg.username);
+  }
+  const pass = one(cfg.password);
+  const submit = one(cfg.submit);
+  if (!user || !pass || !submit) return { state: "fields_missing" };
+  fill(user, account);
+  user.dispatchEvent(new Event("focusout", { bubbles: true }));
+  user.blur();
+  await sleep(Math.max(0, Number(cfg.username_settle_seconds) || 0) * 1000);
+  fill(pass, secret);
+  pass.blur();
+  if (captchaShown()) return { state: "captcha" };
+  if (cfg.remember_me) {
+    const box = one(cfg.remember_me);
+    if (box && !box.checked) box.click();
+  }
+  submit.click();
+  await sleep(1500);
+  return { state: captchaShown() ? "captcha" : "submitted" };
+}
+"""
+
+# Reads the page state after submission (wrong password, CAPTCHA shown).
+AUTO_FILL_STATUS_FUNCTION = r"""
+function (cfg) {
+  const all = (selector) => (selector ? Array.from(document.querySelectorAll(selector)) : []);
+  const visible = (el) => !!el && !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+  const error = all(cfg.error).map((el) => (visible(el) ? el.innerText.trim() : "")).filter(Boolean).join(" ");
+  const captcha = all(cfg.captcha).some((el) => visible(el) && el.innerHTML.trim() !== "");
+  return { error: error.slice(0, 200), captcha: captcha };
+}
+"""
+
+AUTO_FILL_MESSAGES = {
+    "submitted": "已自动填写账号密码并提交，等待学校确认登录",
+    "captcha": "登录页要求验证码，请在浏览器窗口中完成验证后登录",
+    "fields_missing": "登录页上找不到 schools.json 配置的账号 / 密码 / 登录按钮，请手动登录并核对 auto_login 字段",
+}
+
+
+def _login_page_session(cdp: CdpClient, marker: str) -> str | None:
+    """Attach to the tab currently showing the institution login page."""
+    for target in cdp.call("Target.getTargets").get("targetInfos") or []:
+        url = str(target.get("url") or "")
+        if target.get("type") == "page" and (not marker or marker in url):
+            attached = cdp.call("Target.attachToTarget", {"targetId": target["targetId"], "flatten": True})
+            return attached.get("sessionId")
+    return None
+
+
+def _call_in_page(cdp: CdpClient, session_id: str, function: str, *arguments: Any) -> dict[str, Any]:
+    """Call ``function`` in the page with JSON arguments; returns its value."""
+    root = cdp.call("Runtime.evaluate", {"expression": "globalThis"}, session_id=session_id)
+    object_id = (root.get("result") or {}).get("objectId")
+    if not object_id:
+        raise BrowserLoginError("无法访问登录页的脚本环境")
+    result = cdp.call(
+        "Runtime.callFunctionOn",
+        {
+            "objectId": object_id,
+            "functionDeclaration": function,
+            "arguments": [{"value": value} for value in arguments],
+            "awaitPromise": True,
+            "returnByValue": True,
+        },
+        session_id=session_id,
+    )
+    if result.get("exceptionDetails"):
+        raise BrowserLoginError("登录页脚本执行失败：" + str((result["exceptionDetails"].get("exception") or {}).get("description") or "")[:120])
+    value = (result.get("result") or {}).get("value")
+    return value if isinstance(value, dict) else {}
+
+
 def login_with_installed_browser(
     *,
     base_url: str,
@@ -450,6 +549,7 @@ def login_with_installed_browser(
     timeout: float,
     validator: Callable[[Path], dict[str, Any]],
     browser: Path | None = None,
+    auto_fill: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     browser = browser or find_browser()
     if browser is None:
@@ -465,6 +565,10 @@ def login_with_installed_browser(
         base_url, browser=browser, extra_args=("--no-proxy-server",)
     ) as window:
         cdp = window.cdp
+        # Automatic form filling: one submission at most, so a wrong
+        # password never turns into repeated attempts against the account.
+        fill_cfg = {key: value for key, value in (auto_fill or {}).items() if key not in {"account", "secret"}}
+        fill_state = "configured" if auto_fill else "not_configured"
         try:
             deadline = time.monotonic() + timeout
             last_signature = ""
@@ -472,13 +576,56 @@ def login_with_installed_browser(
             last_status: dict[str, Any] = {
                 "valid": False,
                 "state": "waiting",
-                "message": "等待人工登录",
+                "message": "等待登录（自动填写或人工登录）" if auto_fill else "等待人工登录",
             }
             confirmation_signature = ""
             confirmation_started = 0.0
+            fill_done = not auto_fill
+            fill_session: str | None = None
+            fill_checked = 0.0
+            opened = time.monotonic()
             while time.monotonic() < deadline:
                 if not window.alive():
                     raise BrowserLoginError("登录窗口已关闭，但尚未检测到有效登录")
+                now = time.monotonic()
+                if not fill_done and now - opened >= 2.0:
+                    try:
+                        fill_session = fill_session or _login_page_session(
+                            cdp, str(fill_cfg.get("login_url_contains") or "")
+                        )
+                        if fill_session:
+                            outcome = _call_in_page(
+                                cdp, fill_session, AUTO_FILL_FUNCTION,
+                                fill_cfg, auto_fill["account"], auto_fill["secret"],
+                            )
+                            state = str(outcome.get("state") or "")
+                            if state and state != "loading":
+                                fill_done = True
+                                fill_state = state
+                                last_status = {**last_status, "message": AUTO_FILL_MESSAGES.get(state, state)}
+                                LOG.info("%s", last_status["message"])
+                    except BrowserLoginError as exc:
+                        fill_session = None
+                        if not any(word in str(exc) for word in ("navigated", "closed", "No target", "detached")):
+                            fill_done = True
+                            fill_state = "error"
+                            LOG.warning("自动填写登录表单失败，请在窗口中手动登录：%s", exc)
+                        # Otherwise the page was mid-redirect (often the SSO session
+                        # logging in by itself); look again on the next tick.
+                elif fill_session and fill_state in {"submitted", "captcha"} and now - fill_checked >= 3.0:
+                    fill_checked = now
+                    try:
+                        page = _call_in_page(cdp, fill_session, AUTO_FILL_STATUS_FUNCTION, fill_cfg)
+                    except BrowserLoginError:
+                        page = {}
+                    if page.get("error"):
+                        fill_state = "rejected"
+                        last_status = {**last_status, "message": "学校登录页提示：" + str(page["error"])}
+                        LOG.warning("%s（不会自动重试，请在窗口中处理）", last_status["message"])
+                    elif page.get("captcha") and fill_state == "submitted":
+                        fill_state = "captcha"
+                        last_status = {**last_status, "message": AUTO_FILL_MESSAGES["captcha"]}
+                        LOG.warning("%s", last_status["message"])
                 result = cdp.call("Storage.getCookies")
                 cookies = relevant_cookies(result.get("cookies") or [], base_url)
                 signature_source = "\n".join(
@@ -519,6 +666,7 @@ def login_with_installed_browser(
                                 "browser": browser.name,
                                 "cookie_file": str(cookie_file.resolve()),
                                 "cookie_count": len(cookies),
+                                "auto_fill": fill_state,
                                 "session": last_status,
                             }
                     else:
@@ -528,5 +676,8 @@ def login_with_installed_browser(
             raise BrowserLoginError(
                 f"登录等待超时（{int(timeout)} 秒）：{last_status.get('message', '未检测到有效会话')}"
             )
+        except BrowserLoginError as exc:
+            exc.auto_fill = fill_state  # type: ignore[attr-defined]
+            raise
         finally:
             candidate.unlink(missing_ok=True)

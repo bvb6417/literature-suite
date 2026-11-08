@@ -1,31 +1,36 @@
-# Local configuration and credentials
+# Local credentials and preferences
 config.local.json
 *.local.json
+.env
+.env.*
+preview_ui.json
+py简洁打包配置.json
 
-# Runtime data written beside the entry file
+# User content, sessions, and runtime
 downloads/
+translate/
 state/
 browser-data/
 .tmp/
 .literature_suite/
-preview_ui.json
+旧备份/
+*.sqlite*
+*.db
 *.log
-metadata_library.sqlite3*
 *.ris
 *.csv
+hhu_catalog.json
+*cookies*.json
 
-# Python / build output
-.uv-packager/
-py简洁打包配置.json
-runtime-requirements.txt
+# Python, builds, and local tools
 __pycache__/
 *.py[cod]
+.venv/
+.uv-packager/
 build/
 dist/
 *.spec
 *.exe
-
-# Editors and OS
 .vscode/
 .idea/
 .DS_Store

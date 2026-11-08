@@ -69,12 +69,13 @@ def _has_human_challenge(mux, session_id):
         return None
 
 
-def _wait_for_human_challenge(mux, session_id):
+def _wait_for_human_challenge(mux, session_id, deadline):
     mux.call("Page.bringToFront", session_id=session_id, timeout=2)
     print(json.dumps({"worker_event": "stage", "source": "webvpn",
                       "stage": "campus_human_verification"}), flush=True)
-    print("校园网直连遇到人机验证，请在打开的浏览器内手动完成；最多等待 180 秒。", file=__import__('sys').stderr, flush=True)
-    deadline = time.monotonic() + 180
+    deadline = min(deadline, time.monotonic() + 180)
+    remaining = max(0, int(deadline - time.monotonic()))
+    print(f"校园网直连遇到人机验证，请在打开的浏览器内手动完成；剩余最多 {remaining} 秒，计入单篇超时。", file=__import__('sys').stderr, flush=True)
     clear_since = None
     while time.monotonic() < deadline:
         _check_content_error(mux, session_id)
@@ -90,7 +91,7 @@ def _wait_for_human_challenge(mux, session_id):
     raise BrowserLoginError("等待人工验证超时，请完成验证后重试")
 
 
-def _click_article_pdf(mux, session_id, expected_pii, allow_human_verification=True):
+def _click_article_pdf(mux, session_id, expected_pii, allow_human_verification=True, *, deadline):
     """Click the article's own PDF control; do not synthesize a PDF URL."""
     expression = """(() => {
       const pii = __PII__;
@@ -113,15 +114,14 @@ def _click_article_pdf(mux, session_id, expected_pii, allow_human_verification=T
       control.click();
       return {clicked:!!exact,menu_opened:!exact,method:exact?'article_pdf_link':'article_pdf_menu'};
     })()""".replace("__PII__", json.dumps(expected_pii))
-    deadline = time.monotonic() + 20
-    while time.monotonic() < deadline:
+    control_deadline = min(deadline, time.monotonic() + 20)
+    while time.monotonic() < control_deadline:
         _check_content_error(mux, session_id)
         if _has_human_challenge(mux, session_id) is True:
             if not allow_human_verification:
                 raise InstitutionBrowserError("WebVPN 文章页要求人机验证，结束本路线并尝试校园网直连")
-            started = time.monotonic()
-            _wait_for_human_challenge(mux, session_id)
-            deadline += time.monotonic() - started
+            _wait_for_human_challenge(mux, session_id, deadline)
+            control_deadline = min(deadline, time.monotonic() + 20)
         try:
             result = mux.call("Runtime.evaluate", {"expression": expression,
                               "returnByValue": True, "userGesture": True},
@@ -552,17 +552,13 @@ def _send_navigation_and_collect(
     try:
         # Observe native responses for both WebVPN and campus access. Do not
         # request a guessed /pdfft URL or alter the publisher's request headers.
-        click_started = time.monotonic()
         _click_article_pdf(mux, session_id, expected_pii,
-                           allow_human_verification=allow_human_verification)
-        deadline += time.monotonic() - click_started
+                           allow_human_verification=allow_human_verification, deadline=deadline)
         while time.monotonic() < deadline:
             if time.monotonic() >= next_error_probe:
                 _check_content_error(mux, session_id)
                 if allow_human_verification and not human_waited and _has_human_challenge(mux, session_id):
-                    waiting_started = time.monotonic()
-                    _wait_for_human_challenge(mux, session_id)
-                    deadline += time.monotonic() - waiting_started
+                    _wait_for_human_challenge(mux, session_id, deadline)
                     page_loaded_at = time.monotonic()
                     human_waited = True
                 next_error_probe = time.monotonic() + 1.0
@@ -1080,7 +1076,7 @@ def download_elsevier_pdf(
             while time.monotonic() < landing_deadline:
                 _check_content_error(landing_mux, session_id)
                 if direct_network and _has_human_challenge(landing_mux, session_id):
-                    _wait_for_human_challenge(landing_mux, session_id)
+                    _wait_for_human_challenge(landing_mux, session_id, started + timeout)
                     break
                 time.sleep(0.25)
             navigation = _send_navigation_and_collect(
