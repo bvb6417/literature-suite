@@ -1,7 +1,7 @@
 # 2026.11.09 补丁
 
 - 下载页提示学校登录失效时，若已在本机保存该校账号密码，直接启动自动登录并复用，不再先弹出学校信息窗口；验证码仍需在学校页面完成。
-- 同日用 py简洁打包 重新构建 Windows 独立包 `LiteratureSuite.exe`，构建参数和依赖版本与 2026.11.08 相同。
+- 同日用 py简洁打包 重新构建 Windows 独立包 `LiteratureSuite.exe`，依赖版本与 2026.11.08 相同，并恢复原来的 🔍 程序图标（构建命令加 `--icon-text`）。
 
 ## 使用建议
 
@@ -39,7 +39,7 @@
 本次通过“py简洁打包”工具的 CLI 构建，使用独立单文件模式。将下面的工具路径替换为自己的安装位置：
 
 ```powershell
-python "<打包工具目录>/main.py" build . --no-config --entry main.py --requirements packaging/build-requirements.txt --python 3.11.5 --pyinstaller-version 6.21.0 --name LiteratureSuite --mode onefile --windowed --preset compatible --cwd unchanged --extra-arg=--copy-metadata=requests --extra-arg=--copy-metadata=pypdf --extra-arg=--copy-metadata=websocket-client --extra-arg=--copy-metadata=pycryptodome --extra-arg=--copy-metadata=pywin32
+python "<打包工具目录>/main.py" build . --no-config --entry main.py --requirements packaging/build-requirements.txt --python 3.11.5 --pyinstaller-version 6.21.0 --name LiteratureSuite --icon-text "🔍" --mode onefile --windowed --preset compatible --cwd unchanged --extra-arg=--copy-metadata=requests --extra-arg=--copy-metadata=pypdf --extra-arg=--copy-metadata=websocket-client --extra-arg=--copy-metadata=pycryptodome --extra-arg=--copy-metadata=pywin32
 ```
 
 工具会自动发现 `src/` 并收集其学校库和主题资源。请始终从干净源码构建，不要添加 `config.local.json` 或运行数据。
