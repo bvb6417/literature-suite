@@ -1769,7 +1769,7 @@ class DownloadApp(tk.Tk):
             if messagebox.askyesno(
                 "学校登录已失效",
                 f"检测到 {school_name} {access_label} 会话不可用。"
-                "是否现在打开登录窗口手动登录？\n\n"
+                "是否现在登录？已保存的账号密码会自动复用；验证码需在学校页面完成。\n\n"
                 "即使暂不登录，OpenAlex 和 Elsevier API 仍可使用。",
             ):
                 self.login_webvpn()
@@ -1779,7 +1779,10 @@ class DownloadApp(tk.Tk):
         from providers import institutional_access as access
         cfg=read(self._config_file_path(),{})
         entry,_,_=access.selected_school(cfg)
-        if entry.auto_login:
+        username,password,_source=access.resolve_institution_credentials(cfg,entry)
+        has_credentials=bool(username and password)
+        del username,password
+        if entry.auto_login and not has_credentials:
             show_school(self,entry)
             return
         self.status_text.set("正在启动所选学校的机构登录适配器……")
